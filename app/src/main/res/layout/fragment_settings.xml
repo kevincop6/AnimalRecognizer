@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F7F7"
+    tools:context=".SettingsFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/Configuracion"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:textStyle="bold"
+                android:layout_height="wrap_content"
+                android:text="@string/Configuracion_servidor"
+                android:textSize="18sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/serverAddressEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/_127_0_0_1"
+                android:inputType="textUri"
+                android:padding="12dp"
+                android:minHeight="48dp"
+                android:background="@drawable/rounded_edittext_light"
+                android:textColor="#212121"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="8dp"
+                android:layout_marginBottom="16dp"
+                android:autofillHints="none" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:text="@string/peso_del_json_0_kb"
+                android:textSize="18sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/jsonWeightTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/kb_cero"
+                android:focusable="false"
+                android:cursorVisible="false"
+                android:longClickable="false"
+                android:padding="12dp"
+                android:background="@drawable/rounded_edittext_light"
+                android:textColor="#212121"
+                android:autofillHints="none"
+                android:layout_marginBottom="16dp"
+                android:inputType="number" />
+        </LinearLayout>
+    </ScrollView>
+
+
+
+</FrameLayout>

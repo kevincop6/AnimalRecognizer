@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="dark_blue_gray">#394750</color>
+    <color name="light_green">#6cd8bc</color>
+    <color name="light_gray">#d4e5e0</color>
+    <color name="dark_navy">#0e1621</color>
+    <color name="grayish_blue">#70908e</color>
+    <color name="dark_teal">#0b2523</color>
+    <color name="gray_blue">#8da2ac</color>
+    <color name="medium_gray_blue">#60717d</color>
+    <color name="red">#FF0000</color>
+    <color name="green">#00FF00</color>
+    <color name="orange">#FFA500</color>
+
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="dark_gray">#808080</color>
+    <color name="Old_Banani">#242424</color>
+    <color name="activeColor">#FF5722</color> <!-- Color activo -->
+    <color name="inactiveColor">#9E9E9E</color>
+    <color name="light_blue_600">#FF039BE5</color>
+    <color name="light_blue_900">#FF01579B</color>
+    <color name="light_blue_A200">#FF40C4FF</color>
+    <color name="light_blue_A400">#FF00B0FF</color>
+    <color name="black_overlay">#66000000</color> <!-- Color inactivo -->
+    <color name="high_contrast_gray2">#606060</color> <!-- Gris oscuro -->
+    <!-- o -->
+    <color name="high_contrast_gray">#A0A0A0</color> <!-- Gris claro -->
+</resources>

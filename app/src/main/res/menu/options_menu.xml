@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/menu/options_menu.xml -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/option1"
+        android:title="@string/opci_n_1" />
+    <item
+        android:id="@+id/option2"
+        android:title="@string/opci_n_2" />
+</menu>

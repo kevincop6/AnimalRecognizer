@@ -1,0 +1,42 @@
+{
+    "class_indices": {
+        "Agalychnis callidryas": 0,
+        "Ara chloropterus": 1,
+        "Ateles geoffroyi": 2,
+        "Bothriechis schlegelii": 3,
+        "Bradypus variegatus": 4,
+        "Brotogeris jugularis": 5,
+        "Caiman crocodilus": 6,
+        "Campephilus guatemalensis": 7,
+        "Egretta caerulea": 8,
+        "Leptodeira ornata": 9,
+        "Lophostrix cristata": 10,
+        "Oophaga granulifera": 11,
+        "Pecari tajacu": 12,
+        "Penelope dabbenei": 13,
+        "Phyllobates vittatus": 14,
+        "Pteroglossus frantzii": 15,
+        "Tamandua mexicana": 16,
+        "Tapirus bairdii": 17
+    },
+    "class_mapping": {
+        "0": "Agalychnis callidryas",
+        "1": "Ara chloropterus",
+        "2": "Ateles geoffroyi",
+        "3": "Bothriechis schlegelii",
+        "4": "Bradypus variegatus",
+        "5": "Brotogeris jugularis",
+        "6": "Caiman crocodilus",
+        "7": "Campephilus guatemalensis",
+        "8": "Egretta caerulea",
+        "9": "Leptodeira ornata",
+        "10": "Lophostrix cristata",
+        "11": "Oophaga granulifera",
+        "12": "Pecari tajacu",
+        "13": "Penelope dabbenei",
+        "14": "Phyllobates vittatus",
+        "15": "Pteroglossus frantzii",
+        "16": "Tamandua mexicana",
+        "17": "Tapirus bairdii"
+    }
+}

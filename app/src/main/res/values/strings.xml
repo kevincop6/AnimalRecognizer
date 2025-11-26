@@ -1,0 +1,182 @@
+<resources>
+    <string name="app_name">AnimalRecognizer</string>
+    <string name="capturar_imagen">Capturar Imagen</string>
+    <string name="esperando">Esperando...</string>
+    <string name="esperando_identificaci_n">Esperando identificación...</string>
+    <string name="imagen_del_animal_identificado">Imagen del animal identificado</string>
+    <string name="correo_electr_nico">Correo electrónico</string>
+    <string name="contrase_a">Contraseña</string>
+    <string name="olvidaste_tu_contrase_a">¿Olvidaste tu contraseña?</string>
+    <string name="iniciar_sesi_n">Iniciar sesión</string>
+    <string name="inicio_sesi_n">Inicio sesión</string>
+    <string name="cargando">Cargando...</string>
+    <string name="user_email_default">Usuario</string>
+    <string name="tip_user">Tipo usuario</string>
+    <string name="kb_cero">0KB</string>
+
+    <string name="user_email">Correo Usuario</string>
+    <string name="animal_name_default">Animal Name</string>
+    <string name="recycler_view_description">Lista de animales avistados</string>
+    <string name="animal_image_description">Imagen del animal</string>
+    <string name="options_button_description">Opciones</string>
+    <string name="opci_n_1">Opción 1</string>
+    <string name="opci_n_2">Opción 2</string>
+    <string name="AnimalRecognizer_logo_description">AnimalRecognizer Logo</string>
+    <string name="bullet">•</string>
+    <string name="crear_cuenta_nueva">Crear cuenta nueva</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="tapir">Tapir</string>
+    <string name="Generado_IA">Generado por IA</string>
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="guardar">Guardar</string>
+    <string name="direcci_n_servidor">Dirección Servidor</string>
+    <string name="peso_del_json_0_kb">Tamaño Json</string>
+    <string name="select_image">Select Image</string>
+    <string name="selected_image">Selected Image</string>
+    <string name="enter_image_url">https://static.inaturalist.org/photos/173688685/large.jpg</string>
+    <string name="json_size">Tamaño: %1$s</string>
+    <string name="error_code">Error: Código %1$d</string>
+    <string name="error_message">Error: %1$s</string>
+    <string name="reintentar">Reintentar</string>
+    <string name="corcovado_welcome">Bienvenido Corcovado</string>
+    <string name="busqueda">busqueda</string>
+    <string name="buscar">Buscar</string>
+    <string name="animales">Animales</string>
+    <string name="usuarios">Usuarios</string>
+    <string name="busqueda_por_voz">búsqueda por voz</string>
+    <string name="mostrar">mostrar</string>
+    <string name="no_tienes_una_cuenta_reg_strate">¿No tienes una cuenta? Regístrate</string>
+    <string name="has_olvidado_tu_contrase_a">¿Has olvidado tu contraseña?</string>
+    <string name="introduce_tu_correo_electr_nico">Introduce tu correo electrónico</string>
+    <string name="introduce_la_contrase_a">Introduce la contraseña</string>
+    <string name="experimenta_lo_salvaje">Experimenta lo salvaje</string>
+    <string name="bienvenido">Bienvenido %1$s</string>
+    <string name="perezoso_animado">Perezoso Animado</string>
+    <string name="seleccionar_de_la_galer_a">Galería</string>
+    <string name="tomar_una_foto">Tomar foto</string>
+    <string name="listado_animales">Registros</string>
+    <string name="subir_imagen">Subir Imagen</string>
+    <string name="Inicio">Inicio</string>
+    <string name="Galeria">Galería</string>
+    <string name="Perfil">Perfil</string>
+    <string name="Configuracion">Configuración</string>
+    <string name="perezoso_abanderado">Perezoso Abanderado</string>
+    <string name="reconocer_animales">Reconocer animales</string>
+    <string name="bottom_navigation_behavior">com.ulpro.animalrecognizer.BottomNavigationBehavior</string>
+    <string name="_127_0_0_1">127.0.0.1</string>
+    <string name="Configuracion_servidor">Configuración del servidor</string>
+    <string name="previous">Anterior</string>
+    <string name="next">Siguiente</string>
+    <string name="jaguar_image">Imagen de un jaguar</string>
+    <string name="jaguar_in_the_wild">Animal</string>
+    <string name="spotted_in_dense_forest">Animal</string>
+    <string name="animal_description">Descripción del Animal</string>
+    <string name="jaguar_description_text">El jaguar es una especie felina grande y el único miembro vivo del género Panthera nativo de las Américas.</string>
+    <string name="scientific_classification">Clasificación Científica</string>
+    <string name="nombre_en_espanol">Nombre en español</string>
+    <string name="nombre_jaguar">Jaguar</string>
+    <string name="nombre_en_ingles">Nombre en inglés</string>
+    <string name="nombre_jaguar_ingles">Jaguar</string>
+    <string name="nombre_cientifico">Nombre científico</string>
+    <string name="nombre_cientifico_panthera_onca">Panthera onca</string>
+    <string name="reino">Reino</string>
+    <string name="reino_animalia">Animalia</string>
+    <string name="filo">Filo</string>
+    <string name="filo_chordata">Chordata</string>
+    <string name="clase">Clase</string>
+    <string name="clase_mammalia">Mammalia</string>
+    <string name="orden">Orden</string>
+    <string name="orden_carnivora">Carnivora</string>
+    <string name="familia">Familia</string>
+    <string name="familia_felidae">Felidae</string>
+    <string name="genero">Género</string>
+    <string name="genero_panthera">Panthera</string>
+    <string name="distribution">Distribución</string>
+    <string name="distribution_south_america">América del Sur</string>
+    <string name="habitat">Hábitat</string>
+    <string name="habitat_rainforests_swamps_grasslands">Selvas tropicales, pantanos, pastizales</string>
+    <string name="estatus_de_conservacion">Estado</string>
+    <string name="conservation_status_near_threatened">Casi Amenazado</string>
+    <string name="fuente">Fuente</string>
+    <string name="fuente_iucn_red_list">Lista Roja de la UICN</string>
+    <string name="gallery">Galería</string>
+    <string name="howler_monkey">Mono Aullador</string>
+    <string name="found_in_treetops">Encontrado en las copas de los árboles</string>
+    <string name="show_details">Mostrar detalles</string>
+    <string name="hide_details">Ocultar detalles</string>
+    <string name="navigate">Navigate</string>
+    <string name="fullscreen_image_description">Imagen en pantalla completa</string>
+    <string name="read_description">Leer descripción</string>
+    <string name="destacado">Destacados</string>
+    <string name="gallery_image_description">Imagen de la galería</string>
+    <string name="gallery_recycler_view_description">Galería de imágenes</string>
+    <string name="cerrar_sesion">Cerrar Sesión</string>
+    <string name="editar_perfil">Editar Perfil</string>
+    <string name="info_perfil">Información de perfil</string>
+    <string name="aportes">Aportes</string>
+    <string name="bio">Descripción</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+
+    <string name="lorem_ipsum">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
+        volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
+        dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad
+        litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend
+        diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,
+        ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.\n\n
+        Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus
+        egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed
+        neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada
+        fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,
+        molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor
+        bibendum, vel congue leo egestas.\n\n
+        Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit
+        amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,
+        molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer
+        interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at
+        lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,
+        in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque
+        est.\n\n
+        Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.
+        Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui
+        non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In
+        eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,
+        quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra
+        ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a
+        placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus
+        convallis.\n\n
+        Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et
+        malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa
+        gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,
+        libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper
+        sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus
+        libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
+        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
+    </string>
+    <string name="title_activity_full_screen_image">FullScreenImageActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="siguiente">Siguiente</string>
+    <string name="anterior">Anterior</string>
+    <string name="cerrar">Cerrar</string>
+    <string name="image">image</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="diga_algo">Diga algo...</string>
+    <string name="reconocimiento_no_disponible">El reconocimiento de voz no está disponible en este dispositivo.</string>
+</resources>

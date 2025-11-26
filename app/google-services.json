@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "936801905724",
+    "project_id": "animalrecognizer-5c81e",
+    "storage_bucket": "animalrecognizer-5c81e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:936801905724:android:5b0dff494437cf452aa739",
+        "android_client_info": {
+          "package_name": "com.ulpro.animalrecognizer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfd9M8rGQ90fhpgrgqKxN37Gr71LjbrYI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
