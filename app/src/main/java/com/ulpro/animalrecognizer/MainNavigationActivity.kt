@@ -53,29 +53,19 @@ class MainNavigationActivity : AppCompatActivity() {
     }
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-        if (currentFragment is AvistamientosFragment && supportFragmentManager.backStackEntryCount == 1) {
-            SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
-                .setTitleText("¿Estás seguro de que deseas salir?")
-                .setContentText("Se cerrará la aplicación.")
-                .setConfirmText("Sí")
-                .setCancelText("No")
-                .setConfirmClickListener { dialog ->
-                    finishAffinity()
-                }
-                .setCancelClickListener { dialog ->
-                    dialog.dismissWithAnimation() // Cierra el diálogo
-                }
-                .show()
-        } else if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack() // Regresa al fragmento anterior
+        super.onBackPressed()
+        // Si hay más de un fragmento en la pila, simplemente volvemos al anterior.
+        // Se considera 1 como el estado inicial (el primer fragmento).
+        if (supportFragmentManager.backStackEntryCount > 1) {
+            supportFragmentManager.popBackStack()
         } else {
+            // Si estamos en el primer fragmento o no hay ninguno, mostramos el diálogo para salir.
             SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
                 .setTitleText("¿Estás seguro de que deseas salir?")
                 .setContentText("Se cerrará la aplicación.")
                 .setConfirmText("Sí")
                 .setCancelText("No")
-                .setConfirmClickListener { dialog ->
+                .setConfirmClickListener {
                     finishAffinity()
                 }
                 .setCancelClickListener { dialog ->

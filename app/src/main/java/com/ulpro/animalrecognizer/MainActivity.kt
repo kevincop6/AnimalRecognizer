@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         if (isFirstRun) {
             val serverPreferences = getSharedPreferences("serverConfig", MODE_PRIVATE)
             serverPreferences.edit {
-                putString("serverUrl", "http://192.168.100.42/avistamiento/")
+                putString("serverUrl", "http://192.168.100.126/avistamiento/")
                 apply()
             }
             Toast.makeText(this, "Ajustes del servidor aplicados", Toast.LENGTH_SHORT).show()

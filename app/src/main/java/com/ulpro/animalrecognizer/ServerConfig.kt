@@ -10,7 +10,7 @@ object ServerConfig {
 
     fun initialize(context: Context) {
         val sharedPreferences = context.getSharedPreferences("serverConfig", Context.MODE_PRIVATE)
-        BASE_URL = sharedPreferences.getString("serverUrl", "http://192.168.100.42/avistamiento/") ?: "http://192.168.100.42/avistamiento/"
+        BASE_URL = sharedPreferences.getString("serverUrl", "http://192.168.100.126/avistamiento/") ?: "http://192.168.100.126/avistamiento/"
     }
 
     fun updateBaseUrl(context: Context, newUrl: String) {
