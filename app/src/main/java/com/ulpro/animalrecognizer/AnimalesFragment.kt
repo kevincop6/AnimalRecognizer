@@ -9,7 +9,6 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.json.JSONArray
@@ -20,61 +19,67 @@ class AnimalesFragment : Fragment() {
     private lateinit var adapter: AdapterAnimalesFragment
     private var animalList: MutableList<Animal> = mutableListOf()
 
+    // Paginación
+    private lateinit var progressBar: ProgressBar
+    private lateinit var layoutManager: LinearLayoutManager
+    private var isLoading = false
+    private var currentPage = 0
+    private val pageSize = 5
+    private var allCachedAnimalsJson: JSONArray? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_animales, container, false)
         recyclerView = view.findViewById(R.id.rvAnimals)
-        val progressBar: ProgressBar = view.findViewById(R.id.loadingProgressBar)
+        progressBar = view.findViewById(R.id.loadingProgressBar)
 
         // Configurar el LayoutManager
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.layoutManager = layoutManager
 
         // Configurar el adaptador
         adapter = AdapterAnimalesFragment(animalList)
         recyclerView.adapter = adapter
 
-        // Cargar animales desde SharedPreferences
-        loadCachedAnimals(progressBar)
+        // Cargar animales y configurar paginación
+        setupPagination()
+
+        // Listener para carga bajo demanda (scroll)
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+
+                if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                    && firstVisibleItemPosition >= 0
+                    && totalItemCount < (allCachedAnimalsJson?.length() ?: 0)) {
+                    loadCachedAnimalsPage()
+                }
+            }
+        })
+
 
         // Observar cambios en el texto de búsqueda
         sharedViewModel.searchText.observe(viewLifecycleOwner) { searchText ->
-            if (searchText.isBlank()) {
-                adapter.filter.filter("")
-                adapter.notifyDataSetChanged()
-            } else {
-                adapter.filter.filter(searchText)
-                adapter.notifyDataSetChanged()
-            }
+            adapter.filter.filter(searchText)
         }
 
         return view
     }
 
-    private fun loadCachedAnimals(progressBar: ProgressBar) {
-        progressBar.visibility = View.VISIBLE
-
+    private fun setupPagination() {
         val sharedPreferences = requireContext().getSharedPreferences("userSession", Context.MODE_PRIVATE)
         val cachedAnimals = sharedPreferences.getString("cached_animals", null)
 
         if (cachedAnimals != null) {
             try {
-                val animalsArray = JSONArray(cachedAnimals)
-                for (i in 0 until animalsArray.length()) {
-                    val animalJson = animalsArray.getJSONObject(i)
-                    val animal = Animal(
-                        id = animalJson.getInt("id"),
-                        name = animalJson.getString("name"),
-                        imageBase64 = animalJson.getString("imageBase64")
-                    )
-
-                    // Verificar si el animal ya existe en la lista
-                    if (animalList.none { it.id == animal.id }) {
-                        animalList.add(animal)
-                    }
-                }
-                adapter.notifyDataSetChanged()
+                allCachedAnimalsJson = JSONArray(cachedAnimals)
+                // Cargar la primera página
+                loadCachedAnimalsPage()
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(requireContext(), "Error al procesar los datos almacenados", Toast.LENGTH_SHORT).show()
@@ -82,8 +87,39 @@ class AnimalesFragment : Fragment() {
         } else {
             Toast.makeText(requireContext(), "No hay animales almacenados en caché", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun loadCachedAnimalsPage() {
+        if (isLoading) return
+        isLoading = true
+        progressBar.visibility = View.VISIBLE
+
+        val allAnimals = allCachedAnimalsJson ?: return
+        val startIndex = currentPage * pageSize
+        val endIndex = minOf(startIndex + pageSize, allAnimals.length())
+
+        if (startIndex < endIndex) {
+            try {
+                val newAnimals = mutableListOf<Animal>()
+                for (i in startIndex until endIndex) {
+                    val animalJson = allAnimals.getJSONObject(i)
+                    val animal = Animal(
+                        id = animalJson.getInt("id"),
+                        name = animalJson.getString("name"),
+                        imageBase64 = animalJson.getString("imageBase64")
+                    )
+                    newAnimals.add(animal)
+                }
+                adapter.addAnimals(newAnimals)
+                currentPage++
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(requireContext(), "Error al procesar los datos almacenados", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         progressBar.visibility = View.GONE
+        isLoading = false
     }
 
     companion object {
