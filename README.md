@@ -25,6 +25,25 @@ Esta aplicación móvil utiliza modelos de inteligencia artificial pre-entrenado
 
 Actualmente en fase de prototipo, el proyecto busca evolucionar hacia una herramienta de **Ciencia Ciudadana**, permitiendo recopilar datos científicos precisos sobre avistamientos locales.
 
+---
+
+## 🚀 Descargas y Versiones (Beta)
+
+Este proyecto se encuentra actualmente en una fase **Beta** y está configurado exclusivamente para **pruebas en entorno local**.
+
+Puedes encontrar el instalador (APK) y los recursos necesarios en nuestra sección de Releases:
+
+### [🔗 Ir a Releases y Descargas](https://github.com/kevincop6/AnimalRecognizer/releases)
+
+> [!IMPORTANT]
+> **⚠️ Información para Pruebas e Instalación**
+> 
+> Para ejecutar esta aplicación, se requiere una configuración específica del entorno (como la dirección IP del servidor local y credenciales de base de datos) que **no se incluye en el repositorio público** por seguridad.
+>
+> Si deseas realizar pruebas de funcionamiento, por favor contacta al desarrollador para obtener los archivos de configuración (`properties`) y los scripts de base de datos necesarios.
+
+---
+
 ## ✨ Funcionalidades Clave
 
 * **🧠 IA en el Dispositivo:** Reconocimiento de imágenes procesado localmente en el teléfono (Edge AI) para una respuesta inmediata sin internet.
