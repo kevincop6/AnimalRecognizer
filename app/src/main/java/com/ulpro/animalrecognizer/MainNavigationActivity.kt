@@ -3,101 +3,63 @@ package com.ulpro.animalrecognizer
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import cn.pedant.SweetAlert.SweetAlertDialog
 
 class MainNavigationActivity : AppCompatActivity() {
+
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var bottomNavHelper: BottomNavigationHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_navigation)
 
         sharedPreferences = getSharedPreferences("userSession", MODE_PRIVATE)
 
-
-
-        val fragmentToOpen = intent.getStringExtra("open_fragment")
-        val allowedFragments = listOf("SettingsFragment") // Lista de fragmentos permitidos
-
-        if (allowedFragments.contains(fragmentToOpen)) {
-            // Deshabilitar todos los botones de navegación
-            findViewById<View>(R.id.homeButton).isEnabled = false
-            findViewById<View>(R.id.profileButton).isEnabled = false
-            findViewById<View>(R.id.SettingsButton).isEnabled = false
-
-            // Abrir SettingsFragment
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, SettingsFragment())
-                .commit()
-        }else {
-            if (isUserLoggedIn()) {
-                val bottomNavigationHelper = BottomNavigationHelper(this, supportFragmentManager)
-                bottomNavigationHelper.setup(R.id.homeButton)
-
-                // Mostrar el AvistamientosFragment al iniciar la actividad
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, AvistamientosFragment())
-                    .addToBackStack(null) // Agregar al stack de retroceso
-                    .commit()
-                // Marcar el botón de inicio como activo
-                bottomNavigationHelper.markActiveButton(
-                    findViewById(R.id.homeButton),
-                    R.color.orange,
-                    R.color.dark_gray
-                )
-            } else {
-                redirectToLoginActivity()  // Si no hay sesión, vuelve al login
-            }
-        }
-    }
-    @Suppress("DEPRECATION")
-    override fun onBackPressed() {
-        val fragmentToOpen = intent.getStringExtra("open_fragment")
-        // Si la actividad se inició para mostrar SettingsFragment, al presionar atrás,
-        // debemos finalizar esta actividad para volver a MainActivity.
-        if (fragmentToOpen == "SettingsFragment") {
-            finish()
+        if (!isUserLoggedIn()) {
+            redirectToLoginActivity()
             return
         }
 
-        // Si hay más de un fragmento en la pila de retroceso, volvemos al anterior.
-        // De lo contrario, si estamos en el fragmento inicial, mostramos un diálogo de confirmación para salir.
-        if (supportFragmentManager.backStackEntryCount > 1) {
-            super.onBackPressed()
-        } else {
-            // Si estamos en el primer fragmento o no hay ninguno, mostramos el diálogo para salir.
-            SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
-                .setTitleText("¿Estás seguro de que deseas salir?")
-                .setContentText("Se cerrará la aplicación.")
-                .setConfirmText("Sí")
-                .setCancelText("No")
-                .setConfirmClickListener {
-                    finishAffinity()
-                }
-                .setCancelClickListener { dialog ->
-                    dialog.dismissWithAnimation() // Cierra el diálogo
-                }
-                .show()
+        bottomNavHelper = BottomNavigationHelper(this, supportFragmentManager)
+        bottomNavHelper.setup()
+
+        if (savedInstanceState == null) {
+            val fragmentToOpen = intent.getStringExtra("open_fragment")
+            if (fragmentToOpen == "SettingsFragment") {
+                bottomNavHelper.switchFragment(SettingsFragment(), "SETTINGS_FRAGMENT")
+                bottomNavHelper.markActiveButton(findViewById(R.id.SettingsButton), R.color.orange, R.color.dark_gray)
+            } else {
+                bottomNavHelper.showInitialFragment()
+            }
         }
     }
+
     private fun isUserLoggedIn(): Boolean {
-        val usuarioId = sharedPreferences.getString("usuario_id", null) // Verificar clave correcta
         val email = sharedPreferences.getString("userEmail", null)
-        return !usuarioId.isNullOrEmpty() && !email.isNullOrEmpty()  // Evita cadenas vacías
+        return !email.isNullOrEmpty()
     }
 
-    // Redirigir al usuario a AvistamientosActivity
-    private fun redirectToAvistamientosActivity() {
-        val intent = Intent(this, MainNavigationActivity::class.java)
-        startActivity(intent)
-        finish()  // Cierra ProgressActivity para evitar que el usuario regrese
-    }
-
-    // Redirigir al usuario a MainActivity (login)
     private fun redirectToLoginActivity() {
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
-        finish()  // Cierra ProgressActivity para evitar navegación hacia atrás
+        finish()
+    }
+
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 1) {
+            super.onBackPressed()
+            bottomNavHelper.updateButtonStateBasedOnStack()
+        } else {
+            SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
+                .setTitleText("¿Deseas salir?")
+                .setContentText("La aplicación se cerrará.")
+                .setConfirmText("Sí")
+                .setCancelText("No")
+                .setConfirmClickListener { finishAffinity() }
+                .setCancelClickListener { it.dismissWithAnimation() }
+                .show()
+        }
     }
 }
