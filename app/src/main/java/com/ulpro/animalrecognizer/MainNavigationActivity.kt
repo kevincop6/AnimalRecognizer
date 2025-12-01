@@ -53,11 +53,18 @@ class MainNavigationActivity : AppCompatActivity() {
     }
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
-        super.onBackPressed()
-        // Si hay más de un fragmento en la pila, simplemente volvemos al anterior.
-        // Se considera 1 como el estado inicial (el primer fragmento).
+        val fragmentToOpen = intent.getStringExtra("open_fragment")
+        // Si la actividad se inició para mostrar SettingsFragment, al presionar atrás,
+        // debemos finalizar esta actividad para volver a MainActivity.
+        if (fragmentToOpen == "SettingsFragment") {
+            finish()
+            return
+        }
+
+        // Si hay más de un fragmento en la pila de retroceso, volvemos al anterior.
+        // De lo contrario, si estamos en el fragmento inicial, mostramos un diálogo de confirmación para salir.
         if (supportFragmentManager.backStackEntryCount > 1) {
-            supportFragmentManager.popBackStack()
+            super.onBackPressed()
         } else {
             // Si estamos en el primer fragmento o no hay ninguno, mostramos el diálogo para salir.
             SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
