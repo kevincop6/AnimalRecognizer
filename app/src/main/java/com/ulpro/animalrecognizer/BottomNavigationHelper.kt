@@ -13,9 +13,6 @@ class BottomNavigationHelper(
     private val fragmentManager: FragmentManager
 ) {
 
-    private var activeFragment: Fragment? = null
-
-    // Fragment tags
     private val avistamientosTag = "AVISTAMIENTOS_FRAGMENT"
     private val aportesTag = "APORTES_FRAGMENT"
     private val profileTag = "PROFILE_FRAGMENT"
@@ -28,60 +25,56 @@ class BottomNavigationHelper(
 
     fun setup() {
         homeButton.setOnClickListener {
+            if (fragmentManager.primaryNavigationFragment is AvistamientosFragment) return@setOnClickListener
             val fragment = getOrCreateFragment(avistamientosTag) { AvistamientosFragment() }
             switchFragment(fragment, avistamientosTag)
-            markActiveButton(homeButton, R.color.orange, R.color.dark_gray)
         }
-
         galleryButton.setOnClickListener {
+            if (fragmentManager.primaryNavigationFragment is AportesFragment) return@setOnClickListener
             val fragment = getOrCreateFragment(aportesTag) { AportesFragment() }
             switchFragment(fragment, aportesTag)
-            markActiveButton(galleryButton, R.color.orange, R.color.dark_gray)
         }
-
         profileButton.setOnClickListener {
+            if (fragmentManager.primaryNavigationFragment is ProfileFragment) return@setOnClickListener
             val fragment = getOrCreateFragment(profileTag) { ProfileFragment() }
             switchFragment(fragment, profileTag)
-            markActiveButton(profileButton, R.color.orange, R.color.dark_gray)
         }
-
         settingsButton.setOnClickListener {
+            if (fragmentManager.primaryNavigationFragment is SettingsFragment) return@setOnClickListener
             val fragment = getOrCreateFragment(settingsTag) { SettingsFragment() }
             switchFragment(fragment, settingsTag)
-            markActiveButton(settingsButton, R.color.orange, R.color.dark_gray)
         }
     }
 
     fun showInitialFragment() {
         val initialFragment = getOrCreateFragment(avistamientosTag) { AvistamientosFragment() }
-        switchFragment(initialFragment, avistamientosTag, isInitial = true)
-        markActiveButton(homeButton, R.color.orange, R.color.dark_gray)
+        switchFragment(initialFragment, avistamientosTag, addToBackStack = false)
     }
 
     private fun getOrCreateFragment(tag: String, creator: () -> Fragment): Fragment {
         return fragmentManager.findFragmentByTag(tag) ?: creator()
     }
 
-    internal fun switchFragment(fragment: Fragment, tag: String, isInitial: Boolean = false) {
-        val transaction = fragmentManager.beginTransaction()
-
-        activeFragment?.let {
-            if (it != fragment) {
-                transaction.hide(it)
-            }
+    internal fun switchFragment(fragment: Fragment, tag: String, addToBackStack: Boolean = true) {
+        val ft = fragmentManager.beginTransaction()
+        val currentFragment = fragmentManager.primaryNavigationFragment
+        if (currentFragment != null) {
+            ft.hide(currentFragment)
         }
 
-        if (!fragment.isAdded) {
-            transaction.add(R.id.fragmentContainer, fragment, tag)
-        }
-        transaction.show(fragment)
-
-        if (isInitial) {
-            transaction.addToBackStack(tag)
+        if (fragment.isAdded) {
+            ft.show(fragment)
+        } else {
+            ft.add(R.id.fragmentContainer, fragment, tag)
         }
 
-        transaction.commit()
-        activeFragment = fragment
+        ft.setPrimaryNavigationFragment(fragment)
+        ft.setReorderingAllowed(true)
+        if (addToBackStack) {
+            ft.addToBackStack(tag)
+        }
+        ft.commit()
+        updateButtonState() // Actualiza inmediatamente el estado del botón
     }
 
     fun markActiveButton(buttonLayout: LinearLayout, activeColor: Int, inactiveColor: Int) {
@@ -104,8 +97,8 @@ class BottomNavigationHelper(
         }
     }
 
-    fun updateButtonStateBasedOnStack() {
-        val currentFragment = activeFragment
+    fun updateButtonState() {
+        val currentFragment = fragmentManager.primaryNavigationFragment
         val buttonToMark = when (currentFragment) {
             is AvistamientosFragment -> homeButton
             is AportesFragment -> galleryButton
