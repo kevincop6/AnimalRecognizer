@@ -82,18 +82,18 @@ class BottomNavigationHelper(
 
         allButtons.forEach { button ->
             val icon = button.findViewById<ImageView>(R.id.homeIcon)
-                ?: button.findViewById(R.id.galleryIcon)
-                ?: button.findViewById(R.id.profileIcon)
-                ?: button.findViewById(R.id.SettingsIcon)
+                ?: button.findViewById<ImageView>(R.id.galleryIcon)
+                ?: button.findViewById<ImageView>(R.id.profileIcon)
+                ?: button.findViewById<ImageView>(R.id.SettingsIcon)
 
             val text = button.findViewById<TextView>(R.id.homeText)
-                ?: button.findViewById(R.id.galleryText)
-                ?: button.findViewById(R.id.profileText)
-                ?: button.findViewById(R.id.Settingsext)
+                ?: button.findViewById<TextView>(R.id.galleryText)
+                ?: button.findViewById<TextView>(R.id.profileText)
+                ?: button.findViewById<TextView>(R.id.Settingsext)
 
             val color = if (button == buttonLayout) activeColor else inactiveColor
-            icon?.setColorFilter(ContextCompat.getColor(activity, color))
-            text?.setTextColor(ContextCompat.getColor(activity, color))
+            icon.setColorFilter(ContextCompat.getColor(activity, color))
+            text.setTextColor(ContextCompat.getColor(activity, color))
         }
     }
 
