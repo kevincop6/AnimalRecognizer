@@ -1,8 +1,6 @@
 package com.ulpro.animalrecognizer
 
-
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
@@ -13,77 +11,86 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.edit
 import cn.pedant.SweetAlert.SweetAlertDialog
-import kotlin.compareTo
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
     private var lastClickTime: Long = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
+
+        // Config por primera vez (tu lógica original)
         val firstRunPreferences = getSharedPreferences("firstRunConfig", MODE_PRIVATE)
         val isFirstRun = firstRunPreferences.getBoolean("isFirstRun", true)
-        val animalLogo: ImageView = findViewById(R.id.AnimalLogo)
+
         if (isFirstRun) {
             val serverPreferences = getSharedPreferences("serverConfig", MODE_PRIVATE)
-            serverPreferences.edit {
-                putString("serverUrl", "http://192.168.100.126/avistamiento/")
-                apply()
-            }
+            serverPreferences.edit()
+                .putString("serverUrl", "http://192.168.100.135/AnimalRecognizer-API/")
+                .apply()
+
             Toast.makeText(this, "Ajustes del servidor aplicados", Toast.LENGTH_SHORT).show()
-            firstRunPreferences.edit {
-                putBoolean("isFirstRun", false)
-                apply()
-            }
+
+            firstRunPreferences.edit()
+                .putBoolean("isFirstRun", false)
+                .apply()
         }
 
         ServerConfig.initialize(this)
-        sharedPreferences = getSharedPreferences("userSession", MODE_PRIVATE)
         requestEnableNotifications()
 
-        if (isUserLoggedIn()) {
-            redirectToProgressActivity()
+        // ✅ Sesión basada SOLO en token cifrado
+        checkLoginStatus { loggedIn ->
+            if (loggedIn) {
+                redirectToProgressActivity()
+            }
         }
 
+        val animalLogo: ImageView = findViewById(R.id.AnimalLogo)
         val emailEditText: EditText = findViewById(R.id.emailEditText)
         val passwordEditText: EditText = findViewById(R.id.passwordEditText)
         val loginButton: Button = findViewById(R.id.loginButton)
 
         loginButton.setOnClickListener {
-            val correo = emailEditText.text.toString()
+            val usuarioOCorreo = emailEditText.text.toString().trim()
             val contrasena = passwordEditText.text.toString()
 
-            if (correo.isNotEmpty() && contrasena.isNotEmpty()) {
+            if (usuarioOCorreo.isNotEmpty() && contrasena.isNotEmpty()) {
                 val loadingDialog = SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE).apply {
                     titleText = "Verificando..."
                     setCancelable(false)
                     show()
                 }
 
-                val serverConnection = ServerConnection(this)
-                serverConnection.login(correo, contrasena) { success, result ->
-                    loadingDialog.dismissWithAnimation()
+                ServerConnection(this).login(usuarioOCorreo, contrasena) { success, result ->
+                    runOnUiThread {
+                        loadingDialog.dismissWithAnimation()
 
-                    if (success && result != null) {
-                        val (usuarioId, nombreUsuario) = result.split("|")
-                        saveUserSession(correo, usuarioId, nombreUsuario)
+                        if (success) {
+                            val token = result as String
+                            // ✅ guardar SOLO token (cifrado)
+                            TokenStore.saveToken(this, token)
 
-                        SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE).apply {
-                            titleText = "Acceso concedido"
-                            confirmText = "Aceptar"
-                            setConfirmClickListener {
-                                dismissWithAnimation()
-                                redirectToProgressActivity()
+                            SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE).apply {
+                                titleText = "Acceso concedido"
+                                confirmText = "Aceptar"
+                                setConfirmClickListener {
+                                    dismissWithAnimation()
+                                    redirectToProgressActivity()
+                                }
+                                show()
                             }
-                            show()
+                        } else {
+                            val msg = (result as? String) ?: "Error desconocido"
+                            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(this, "Error en el inicio de sesión: ${result ?: "Desconocido"}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
@@ -102,24 +109,61 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun isUserLoggedIn(): Boolean {
-        val email = sharedPreferences.getString("userEmail", null)
-        val userId = sharedPreferences.getString("usuario_id", null)
-        return email != null && userId != null
+    private fun hasInternet(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+    private fun checkLoginStatus(done: (Boolean) -> Unit) {
+        val token = TokenStore.getToken(this)
 
-    private fun saveUserSession(email: String, userId: String, nombreUsuario: String) {
-        sharedPreferences.edit {
-            putString("userEmail", email)
-            putString("usuario_id", userId)
-            putString("nombre_usuario", nombreUsuario)
-            apply()
+        // Sin token => no sesión
+        if (token.isNullOrBlank()) {
+            done(false)
+            return
+        }
+
+        // Sin internet => permitir modo sin conexión
+        if (!hasInternet()) {
+            done(true)
+            return
+        }
+
+        // Con internet => verificar por POST
+        ServerConnection(this).verifySession(token) { result ->
+            runOnUiThread {
+                when (result) {
+                    is VerifyResult.Active -> {
+                        // ✅ ÚNICO caso permitido por el servidor
+                        done(true)
+                    }
+
+                    is VerifyResult.Inactive -> {
+                        // ❌ activo:false (token faltante o expirado o cerrado)
+                        TokenStore.clearToken(this) // recomendado para obligar login limpio
+                        done(false)
+                    }
+
+                    is VerifyResult.ServerError -> {
+                        // ❌ hubo respuesta con "error" (405/500/etc)
+                        // No es offline: el servidor respondió, así que NO permitir
+                        done(false)
+                    }
+
+                    is VerifyResult.NetworkError -> {
+                        // ✅ ÚNICO caso donde permites offline
+                        done(true)
+                    }
+                }
+            }
         }
     }
 
+
+
     private fun redirectToProgressActivity() {
-        val intent = Intent(this, ProgressActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, ProgressActivity::class.java))
         finish()
     }
 

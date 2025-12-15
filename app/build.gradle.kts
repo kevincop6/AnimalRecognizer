@@ -89,4 +89,7 @@ dependencies {
     // Si usas metadatos en el modelo (ej: modelos descargados de TF Hub)
     implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.4")
 
+    // Se usa para encriptar datos
+    implementation("androidx.security:security-crypto:1.1.0")
+
 }
