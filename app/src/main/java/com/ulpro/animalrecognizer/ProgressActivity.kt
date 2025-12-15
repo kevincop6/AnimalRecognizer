@@ -1,14 +1,15 @@
 package com.ulpro.animalrecognizer
 
 import android.content.Intent
-import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -17,66 +18,104 @@ import java.util.concurrent.TimeUnit
 
 class ProgressActivity : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
+    private val minAnimationMs = 6000L
+    private val workName = "fetch_animals_weekly"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_progress)
-// Configurar CrashHandler
+
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
-        // Inicializar SharedPreferences
-        sharedPreferences = getSharedPreferences("userSession", MODE_PRIVATE)
+
+        // Cargar GIF
         val gifImageView: ImageView = findViewById(R.id.logoImageView)
-
-        // Cargar el GIF desde una URL
         Glide.with(this)
-            .asGif() // Especificar que es un GIF
-            .load(R.drawable.animal_animation)
+            .asGif()
+            .load(R.drawable.logo_animado)
             .into(gifImageView)
-        // Simular carga de datos con Handler
+
+        // Mantener animación mínimo 6s antes de decidir a dónde ir
         Handler(Looper.getMainLooper()).postDelayed({
-            if (isUserLoggedIn()) {
-                // Configurar restricciones para que solo se ejecute con conexión a Internet
-                val constraints = Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
+            decideNextScreen()
+        }, minAnimationMs)
+    }
 
-// Crear un PeriodicWorkRequest para que se ejecute una vez por semana
-                val fetchAnimalsWorkRequest = PeriodicWorkRequestBuilder<FetchAnimalsWorker>(7, TimeUnit.DAYS)
-                    .setConstraints(constraints)
-                    .build()
+    private fun decideNextScreen() {
+        ServerConfig.initialize(this)
 
-// Encolar el trabajo
-                WorkManager.getInstance(this).enqueue(fetchAnimalsWorkRequest)
-                redirectToAvistamientosActivity()  // Redirige a Avistamientos si la sesión es válida
-            } else {
-                redirectToLoginActivity()  // Si no hay sesión, vuelve al login
+        val token = TokenStore.getToken(this)
+        if (token.isNullOrBlank()) {
+            redirectToLoginActivity()
+            return
+        }
+
+        // Sin internet => permitir modo sin conexión
+        if (!hasInternet()) {
+            scheduleFetchAnimalsWorker()
+            redirectToAvistamientosActivity()
+            return
+        }
+
+        // Con internet => verificar sesión por POST (solo permite si activo=true)
+        ServerConnection(this).verifySession(token) { result ->
+            when (result) {
+                is VerifyResult.Active -> {
+                    // Guardar paquete_predeterminado si viene (si ya lo haces en otro lado, esto es opcional)
+                    result.paquetePredeterminado?.let { UserPrefs.savePaquete(this, it) }
+
+                    scheduleFetchAnimalsWorker()
+                    redirectToAvistamientosActivity()
+                }
+
+                is VerifyResult.Inactive -> {
+                    TokenStore.clearToken(this)
+                    redirectToLoginActivity()
+                }
+
+                is VerifyResult.ServerError -> {
+                    // Hubo respuesta con error => NO permitir
+                    redirectToLoginActivity()
+                }
+
+                is VerifyResult.NetworkError -> {
+                    // No se pudo conectar aunque hay red "teórica" => trátalo como sin conexión
+                    scheduleFetchAnimalsWorker()
+                    redirectToAvistamientosActivity()
+                }
             }
-        }, 3000)  // 3 segundos de espera
-        // Verificar si el archivo del modelo existe en assets
-
+        }
     }
 
-    // Función para verificar si el usuario está logueado
-    private fun isUserLoggedIn(): Boolean {
-        val usuarioId = sharedPreferences.getString("usuario_id", null) // Verificar clave correcta
-        val email = sharedPreferences.getString("userEmail", null)
-        return !usuarioId.isNullOrEmpty() && !email.isNullOrEmpty()  // Evita cadenas vacías
+    private fun scheduleFetchAnimalsWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = PeriodicWorkRequestBuilder<FetchAnimalsWorker>(7, TimeUnit.DAYS)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            workName,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
     }
 
-    // Redirigir al usuario a AvistamientosActivity
+    private fun hasInternet(): Boolean {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private fun redirectToAvistamientosActivity() {
-        val intent = Intent(this, MainNavigationActivity::class.java)
-        startActivity(intent)
-        finish()  // Cierra ProgressActivity para evitar que el usuario regrese
+        startActivity(Intent(this, MainNavigationActivity::class.java))
+        finish()
     }
 
-    // Redirigir al usuario a MainActivity (login)
     private fun redirectToLoginActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-        finish()  // Cierra ProgressActivity para evitar navegación hacia atrás
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 }
-
-

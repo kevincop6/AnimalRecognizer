@@ -122,12 +122,27 @@ class ServerConnection(private val context: Context) {
                 if (json.has("activo")) {
                     val activo = json.optBoolean("activo", false)
                     val mensaje = json.optString("mensaje", "")
-                    onMain {
-                        if (activo) callback(VerifyResult.Active(mensaje))
-                        else callback(VerifyResult.Inactive(mensaje))
+
+                    if (activo) {
+                        val usuarioJson = json.optJSONObject("usuario")
+                        val paquete = usuarioJson?.optString("paquete_predeterminado", null)
+
+                        onMain {
+                            callback(
+                                VerifyResult.Active(
+                                    mensaje = mensaje,
+                                    paquetePredeterminado = paquete
+                                )
+                            )
+                        }
+                    } else {
+                        onMain {
+                            callback(VerifyResult.Inactive(mensaje))
+                        }
                     }
                     return
                 }
+
 
                 onMain { callback(VerifyResult.ServerError("Respuesta incompleta del servidor")) }
             }
@@ -136,7 +151,7 @@ class ServerConnection(private val context: Context) {
 }
 
 sealed class VerifyResult {
-    data class Active(val mensaje: String) : VerifyResult()
+    data class Active(val mensaje: String, val paquetePredeterminado: String?) : VerifyResult()
     data class Inactive(val mensaje: String) : VerifyResult()
     data class NetworkError(val mensaje: String) : VerifyResult()
     data class ServerError(val mensaje: String) : VerifyResult()

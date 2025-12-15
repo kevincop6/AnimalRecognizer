@@ -135,29 +135,31 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 when (result) {
                     is VerifyResult.Active -> {
-                        // ✅ ÚNICO caso permitido por el servidor
+                        // ✅ guardar paquete para uso posterior
+                        result.paquetePredeterminado?.let {
+                            UserPrefs.savePaquete(this, it)
+                        }
                         done(true)
                     }
 
                     is VerifyResult.Inactive -> {
-                        // ❌ activo:false (token faltante o expirado o cerrado)
-                        TokenStore.clearToken(this) // recomendado para obligar login limpio
+                        TokenStore.clearToken(this)
+                        UserPrefs.clear(this)
                         done(false)
                     }
 
                     is VerifyResult.ServerError -> {
-                        // ❌ hubo respuesta con "error" (405/500/etc)
-                        // No es offline: el servidor respondió, así que NO permitir
                         done(false)
                     }
 
                     is VerifyResult.NetworkError -> {
-                        // ✅ ÚNICO caso donde permites offline
+                        // único caso offline permitido
                         done(true)
                     }
                 }
             }
         }
+
     }
 
 

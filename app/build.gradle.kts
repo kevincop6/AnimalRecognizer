@@ -71,6 +71,7 @@ dependencies {
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.airbnb.android:lottie:5.0.3")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("com.github.f0ris.sweetalert:library:1.6.2")
     implementation("androidx.appcompat:appcompat:1.6.1")
