@@ -1,7 +1,8 @@
 package com.ulpro.animalrecognizer
 
 import android.content.Intent
-import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -10,20 +11,54 @@ import cn.pedant.SweetAlert.SweetAlertDialog
 
 class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackChangedListener {
 
-    private lateinit var sharedPreferences: SharedPreferences
     private lateinit var bottomNavHelper: BottomNavigationHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_navigation)
 
-        sharedPreferences = getSharedPreferences("userSession", MODE_PRIVATE)
+        ServerConfig.initialize(this)
 
-        if (!isUserLoggedIn()) {
+        // ✅ Autenticación basada en token
+        val token = TokenStore.getToken(this)
+        if (token.isNullOrBlank()) {
             redirectToLoginActivity()
             return
         }
 
+        // ✅ Si hay internet, validamos sesión con el servidor (solo entra si activo=true)
+        // ✅ Si no hay internet, permitimos modo sin conexión
+        if (hasInternet()) {
+            ServerConnection(this).verifySession(token) { result ->
+                when (result) {
+                    is VerifyResult.Active -> {
+                        // Guardar paquete_predeterminado si llegó
+                        result.paquetePredeterminado?.let { UserPrefs.savePaquete(this, it) }
+                        setupUi(savedInstanceState)
+                    }
+
+                    is VerifyResult.Inactive -> {
+                        TokenStore.clearToken(this)
+                        redirectToLoginActivity()
+                    }
+
+                    is VerifyResult.ServerError -> {
+                        // servidor respondió con error => NO permitir
+                        redirectToLoginActivity()
+                    }
+
+                    is VerifyResult.NetworkError -> {
+                        // no se pudo conectar aunque “hay internet” => permitir offline
+                        setupUi(savedInstanceState)
+                    }
+                }
+            }
+        } else {
+            setupUi(savedInstanceState)
+        }
+    }
+
+    private fun setupUi(savedInstanceState: Bundle?) {
         bottomNavHelper = BottomNavigationHelper(this, supportFragmentManager)
         bottomNavHelper.setup()
 
@@ -60,14 +95,15 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
         bottomNavHelper.updateButtonState()
     }
 
-    private fun isUserLoggedIn(): Boolean {
-        val email = sharedPreferences.getString("userEmail", null)
-        return !email.isNullOrEmpty()
+    private fun hasInternet(): Boolean {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     private fun redirectToLoginActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
 }
