@@ -2,7 +2,6 @@ package com.ulpro.animalrecognizer
 
 import android.app.Dialog
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
@@ -17,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cn.pedant.SweetAlert.SweetAlertDialog
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 class details_animals : AppCompatActivity() {
 
     private lateinit var imageView: ImageView
-    private val imageList = mutableListOf<Bitmap>()
+    private val imageUrlList = mutableListOf<String>()
     private var currentIndex = 0
 
     private lateinit var textToSpeech: TextToSpeech
@@ -60,21 +60,24 @@ class details_animals : AppCompatActivity() {
 
         imageView = findViewById(R.id.imageView)
 
-        // Fullscreen al tocar la imagen
+        // Fullscreen al tocar la imagen (carga por URL)
         imageView.setOnClickListener {
-            if (imageList.isNotEmpty()) {
+            if (imageUrlList.isNotEmpty() && currentIndex in imageUrlList.indices) {
                 val dialog = Dialog(this)
                 dialog.setContentView(R.layout.dialog_fullscreen_image)
                 val fullScreenImageView = dialog.findViewById<ImageView>(R.id.fullScreenImageView)
-                fullScreenImageView.setImageBitmap(imageList[currentIndex])
+
+                Glide.with(this)
+                    .load(imageUrlList[currentIndex])
+                    .into(fullScreenImageView)
+
                 dialog.show()
             }
         }
 
-        // Botones prev/next
         setupImageNavigationButtons()
 
-        // Mostrar / ocultar detalles
+        // Show/Hide details
         val buttonShowHideDetails = findViewById<Button>(R.id.buttonShowHideDetails)
         val detailsLayout = findViewById<LinearLayout>(R.id.detailsLayout)
         val textViewDescription = findViewById<TextView>(R.id.textViewDescription)
@@ -91,7 +94,7 @@ class details_animals : AppCompatActivity() {
             }
         }
 
-        // TTS
+        // TextToSpeech
         val buttonReadAll = findViewById<ImageButton>(R.id.buttonReadDescription)
         textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -124,14 +127,12 @@ class details_animals : AppCompatActivity() {
 
         textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
-
             override fun onDone(utteranceId: String?) {
                 runOnUiThread {
                     currentPosition = 0
                     buttonReadAll.setImageResource(R.drawable.ic_refresh_24dp)
                 }
             }
-
             override fun onError(utteranceId: String?) {}
         })
 
@@ -148,7 +149,7 @@ class details_animals : AppCompatActivity() {
     }
 
     // =========================================================
-    // POST /api/animales/view_animal.php  (id + token)
+    // POST /api/animales/view_animal.php (id + token)
     // =========================================================
     private fun fetchAnimalDetails(animalId: Int) {
         val token = TokenStore.getToken(this)
@@ -195,14 +196,13 @@ class details_animals : AppCompatActivity() {
                                 setupRecommendationsFromApi(recomendaciones)
                             }
 
-                            // ✅ Cargar primero imagen principal, luego las demás
                             animal.optJSONArray("urls_archivos_media")?.let { media ->
-                                populateImagesPrioritizingPrincipal(media)
-                            } ?: run {
                                 withContext(Dispatchers.Main) {
-                                    imageList.clear()
-                                    currentIndex = 0
+                                    populateImagesOnlinePrioritizingPrincipal(media)
                                 }
+                            } ?: withContext(Dispatchers.Main) {
+                                imageUrlList.clear()
+                                currentIndex = 0
                             }
                         }
 
@@ -233,7 +233,7 @@ class details_animals : AppCompatActivity() {
     }
 
     // =========================================================
-    // UI: Textos según JSON real
+    // Textos según JSON real
     // =========================================================
     private fun populateTextFieldsFromApi(animal: JSONObject) {
         findViewById<TextView>(R.id.textViewTitle).text = animal.optString("nombre_comun", "N/A")
@@ -282,47 +282,61 @@ class details_animals : AppCompatActivity() {
     }
 
     // =========================================================
-    // ✅ Principal primero, luego el resto (para UI instantánea)
+    // ✅ Imágenes "en línea" con Glide:
+    // - arma lista de URLs (N archivos)
+    // - principal primero
+    // - muestra principal inmediatamente
+    // - luego prefetch del resto para que Next sea instantáneo
     // =========================================================
-    private fun populateImagesPrioritizingPrincipal(mediaArray: JSONArray) {
-        imageList.clear()
+    private fun populateImagesOnlinePrioritizingPrincipal(mediaArray: JSONArray) {
+        imageUrlList.clear()
         currentIndex = 0
 
+        val seen = HashSet<String>()
         val entries = (0 until mediaArray.length()).mapNotNull { i ->
             val obj = mediaArray.optJSONObject(i) ?: return@mapNotNull null
-            val url = obj.optString("url_archivo", "").trim()
-            if (url.isBlank()) return@mapNotNull null
-            val principal = obj.optInt("es_principal", 0)
-            MediaEntry(index = i, isPrincipal = principal == 1, url = url)
+            val raw = obj.optString("url_archivo", "").trim()
+            if (raw.isBlank()) return@mapNotNull null
+
+            val url = normalizeUrl(raw)
+            if (!seen.add(url)) return@mapNotNull null
+
+            val isPrincipal = obj.optInt("es_principal", 0) == 1
+            MediaEntry(index = i, isPrincipal = isPrincipal, url = url)
         }
 
-        val principal = entries.firstOrNull { it.isPrincipal } ?: entries.firstOrNull()
-        val rest = entries.filter { it != principal }
+        if (entries.isEmpty()) return
 
-        // 1) cargar principal primero
-        if (principal == null) return
+        val ordered = entries.sortedWith(
+            compareByDescending<MediaEntry> { it.isPrincipal }
+                .thenBy { it.index }
+        )
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val principalBmp = downloadBitmap(normalizeUrl(principal.url))
-            if (principalBmp != null) {
-                withContext(Dispatchers.Main) {
-                    imageList.add(principalBmp)
-                    currentIndex = 0
-                    imageView.setImageBitmap(principalBmp)
-                }
-            }
+        imageUrlList.addAll(ordered.map { it.url })
 
-            // 2) luego cargar las demás
-            for (e in rest) {
-                val bmp = downloadBitmap(normalizeUrl(e.url)) ?: continue
-                withContext(Dispatchers.Main) {
-                    imageList.add(bmp)
-                }
+        // Mostrar inmediatamente la primera (principal si existe)
+        showCurrentImage()
+
+        // Prefetch del resto (sin bloquear UI)
+        // Nota: Glide maneja caché; esto hace que "Next" se sienta inmediato.
+        CoroutineScope(Dispatchers.Main).launch {
+            for (i in 1 until imageUrlList.size) {
+                Glide.with(this@details_animals)
+                    .load(imageUrlList[i])
+                    .preload()
             }
         }
     }
 
     private data class MediaEntry(val index: Int, val isPrincipal: Boolean, val url: String)
+
+    private fun showCurrentImage() {
+        if (imageUrlList.isEmpty() || currentIndex !in imageUrlList.indices) return
+
+        Glide.with(this)
+            .load(imageUrlList[currentIndex])
+            .into(imageView)
+    }
 
     // =========================================================
     // Destacados: recomendaciones[] (URL + click => details_animals)
@@ -361,29 +375,23 @@ class details_animals : AppCompatActivity() {
     }
 
     // =========================================================
-    // Imágenes prev/next
+    // Prev / Next (con URLs)
     // =========================================================
     private fun setupImageNavigationButtons() {
         val buttonPrevious = findViewById<Button>(R.id.buttonPrevious)
         val buttonNext = findViewById<Button>(R.id.buttonNext)
 
-        fun updateImage() {
-            if (imageList.isNotEmpty()) {
-                imageView.setImageBitmap(imageList[currentIndex])
-            }
-        }
-
         buttonPrevious.setOnClickListener {
-            if (imageList.isNotEmpty() && currentIndex > 0) {
+            if (imageUrlList.isNotEmpty() && currentIndex > 0) {
                 currentIndex--
-                updateImage()
+                showCurrentImage()
             }
         }
 
         buttonNext.setOnClickListener {
-            if (imageList.isNotEmpty() && currentIndex < imageList.size - 1) {
+            if (imageUrlList.isNotEmpty() && currentIndex < imageUrlList.size - 1) {
                 currentIndex++
-                updateImage()
+                showCurrentImage()
             }
         }
     }
@@ -425,19 +433,6 @@ class details_animals : AppCompatActivity() {
         (0 until length()).mapNotNull { idx ->
             optString(idx, null)?.takeIf { it.isNotBlank() }
         }
-
-    private fun downloadBitmap(url: String): Bitmap? {
-        return try {
-            val req = Request.Builder().url(url).get().build()
-            httpClient.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return null
-                val bytes = resp.body?.bytes() ?: return null
-                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            }
-        } catch (_: Exception) {
-            null
-        }
-    }
 
     private fun redirectToLogin() {
         startActivity(Intent(this, MainActivity::class.java))
