@@ -13,49 +13,91 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
 
     private lateinit var bottomNavHelper: BottomNavigationHelper
 
+    private val sessionCheckHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val sessionCheckIntervalMs = 60_000L
+
+    private var uiReady = false // ✅ evita arrancar el loop antes de setupUi()
+
+    private val sessionCheckRunnable = object : Runnable {
+        override fun run() {
+            val token = TokenStore.getToken(this@MainNavigationActivity)
+            if (token.isNullOrBlank()) {
+                logoutAndRedirect()
+                return
+            }
+
+            if (!hasInternet()) {
+                sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                return
+            }
+
+            ServerConnection(this@MainNavigationActivity).verifySession(token) { result ->
+                when (result) {
+                    is VerifyResult.Active -> {
+                        result.paquetePredeterminado?.let { UserPrefs.savePaquete(this@MainNavigationActivity, it) }
+                        sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                    }
+
+                    is VerifyResult.Inactive,
+                    is VerifyResult.ServerError -> {
+                        logoutAndRedirect()
+                    }
+
+                    is VerifyResult.NetworkError -> {
+                        sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_navigation)
 
         ServerConfig.initialize(this)
 
-        // ✅ Autenticación basada en token
         val token = TokenStore.getToken(this)
         if (token.isNullOrBlank()) {
-            redirectToLoginActivity()
+            logoutAndRedirect()
             return
         }
 
-        // ✅ Si hay internet, validamos sesión con el servidor (solo entra si activo=true)
-        // ✅ Si no hay internet, permitimos modo sin conexión
         if (hasInternet()) {
             ServerConnection(this).verifySession(token) { result ->
                 when (result) {
                     is VerifyResult.Active -> {
-                        // Guardar paquete_predeterminado si llegó
                         result.paquetePredeterminado?.let { UserPrefs.savePaquete(this, it) }
                         setupUi(savedInstanceState)
                     }
 
-                    is VerifyResult.Inactive -> {
-                        TokenStore.clearToken(this)
-                        redirectToLoginActivity()
-                    }
-
+                    is VerifyResult.Inactive,
                     is VerifyResult.ServerError -> {
-                        // servidor respondió con error => NO permitir
-                        redirectToLoginActivity()
+                        logoutAndRedirect()
                     }
 
                     is VerifyResult.NetworkError -> {
-                        // no se pudo conectar aunque “hay internet” => permitir offline
-                        setupUi(savedInstanceState)
+                        setupUi(savedInstanceState) // permitir “offline”
                     }
                 }
             }
         } else {
             setupUi(savedInstanceState)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // ✅ solo si la UI ya está lista
+        if (uiReady) {
+            sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
+            sessionCheckHandler.post(sessionCheckRunnable)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
     }
 
     private fun setupUi(savedInstanceState: Bundle?) {
@@ -72,6 +114,10 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
                 bottomNavHelper.showInitialFragment()
             }
         }
+
+        uiReady = true // ✅ marcar listo
+        sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
+        sessionCheckHandler.post(sessionCheckRunnable) // ✅ arrancar el loop aquí (seguro)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -93,6 +139,13 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
 
     override fun onBackStackChanged() {
         bottomNavHelper.updateButtonState()
+    }
+
+    private fun logoutAndRedirect() {
+        sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
+        TokenStore.clearToken(this)
+        UserPrefs.clear(this)
+        redirectToLoginActivity()
     }
 
     private fun hasInternet(): Boolean {

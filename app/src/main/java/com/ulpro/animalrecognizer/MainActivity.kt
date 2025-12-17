@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         if (isFirstRun) {
             val serverPreferences = getSharedPreferences("serverConfig", MODE_PRIVATE)
             serverPreferences.edit()
-                .putString("serverUrl", "http://192.168.100.135/AnimalRecognizer-API/")
+                .putString("serverUrl", "http://192.168.100.41/AnimalRecognizer-API/")
                 .apply()
 
             Toast.makeText(this, "Ajustes del servidor aplicados", Toast.LENGTH_SHORT).show()

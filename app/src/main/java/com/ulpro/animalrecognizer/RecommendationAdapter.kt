@@ -1,17 +1,16 @@
 package com.ulpro.animalrecognizer
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 
 class RecommendationAdapter(
     private val items: List<RecommendationItem>,
-    private val onItemClick: (Int) -> Unit // Callback para manejar clics
+    private val onItemClick: (Int) -> Unit
 ) : RecyclerView.Adapter<RecommendationAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -29,18 +28,18 @@ class RecommendationAdapter(
         val item = items[position]
         holder.textViewName.text = item.name
 
-        // Decodificar imagen Base64
-        val imageBytes = Base64.decode(item.imageBase64.split(",")[1], Base64.DEFAULT)
-        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-        holder.imageView.setImageBitmap(bitmap)
+        Glide.with(holder.itemView)
+            .load(item.imageUrl)
+            .into(holder.imageView)
 
-        // Configurar clic en el ítem
-        holder.itemView.setOnClickListener {
-            onItemClick(item.id) // Llamar al callback con el ID del ítem
-        }
+        holder.itemView.setOnClickListener { onItemClick(item.id) }
     }
 
     override fun getItemCount(): Int = items.size
 }
 
-data class RecommendationItem(val id: Int, val name: String, val imageBase64: String)
+data class RecommendationItem(
+    val id: Int,
+    val name: String,
+    val imageUrl: String
+)
