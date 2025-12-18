@@ -1,1 +1,21 @@
+# --- Build System ---
 /build
+.gradle/
+build/
+app/build/
+
+# --- Configuración Local y Secretos (CRÍTICO) ---
+local.properties
+google-services.json
+
+# --- Android Studio / IntelliJ IDE ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# --- Archivos generados ---
+captures/
+.externalNativeBuild/
+.cxx/
