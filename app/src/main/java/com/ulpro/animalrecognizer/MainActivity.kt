@@ -1,6 +1,9 @@
 package com.ulpro.animalrecognizer
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
@@ -12,13 +15,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import cn.pedant.SweetAlert.SweetAlertDialog
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 
 class MainActivity : AppCompatActivity() {
 
     private var lastClickTime: Long = 0
+
+    // ✅ Dialogo bloqueante para verificación de sesión
+    private var sessionCheckDialog: SweetAlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,17 +49,43 @@ class MainActivity : AppCompatActivity() {
         ServerConfig.initialize(this)
         requestEnableNotifications()
 
-        // ✅ Sesión basada SOLO en token cifrado
-        checkLoginStatus { loggedIn ->
-            if (loggedIn) {
-                redirectToProgressActivity()
-            }
-        }
-
         val animalLogo: ImageView = findViewById(R.id.AnimalLogo)
         val emailEditText: EditText = findViewById(R.id.emailEditText)
         val passwordEditText: EditText = findViewById(R.id.passwordEditText)
         val loginButton: Button = findViewById(R.id.loginButton)
+
+        // ✅ Bloqueo/Desbloqueo UI mientras valida sesión automática
+        fun setUiEnabled(enabled: Boolean) {
+            emailEditText.isEnabled = enabled
+            passwordEditText.isEnabled = enabled
+            loginButton.isEnabled = enabled
+            animalLogo.isEnabled = enabled
+        }
+
+        // ✅ Mostrar loader bloqueante SOLO si hay token (o sea, hay algo que verificar)
+        val existingToken = TokenStore.getToken(this)
+        if (!existingToken.isNullOrBlank()) {
+            setUiEnabled(false)
+            sessionCheckDialog = SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE).apply {
+                titleText = "Verificando sesión..."
+                setCancelable(false) // ✅ no se puede cerrar ni tocar fuera
+                show()
+            }
+        }
+
+        // ✅ Sesión basada SOLO en token cifrado
+        checkLoginStatus { loggedIn ->
+            runOnUiThread {
+                // cerrar loader y habilitar UI siempre que termine
+                sessionCheckDialog?.dismissWithAnimation()
+                sessionCheckDialog = null
+                setUiEnabled(true)
+
+                if (loggedIn) {
+                    redirectToProgressActivity()
+                }
+            }
+        }
 
         loginButton.setOnClickListener {
             val usuarioOCorreo = emailEditText.text.toString().trim()
@@ -115,10 +144,11 @@ class MainActivity : AppCompatActivity() {
         val caps = cm.getNetworkCapabilities(network) ?: return false
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+
     private fun checkLoginStatus(done: (Boolean) -> Unit) {
         val token = TokenStore.getToken(this)
 
-        // Sin token => no sesión
+        // Sin token => no sesión (no hay nada que verificar)
         if (token.isNullOrBlank()) {
             done(false)
             return
@@ -159,10 +189,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
     }
-
-
 
     private fun redirectToProgressActivity() {
         startActivity(Intent(this, ProgressActivity::class.java))
@@ -179,5 +206,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             Log.d("NotificationCheck", "Las notificaciones están habilitadas.")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // evitar window leak por si la activity muere en medio de la verificación
+        sessionCheckDialog?.dismissWithAnimation()
+        sessionCheckDialog = null
     }
 }
