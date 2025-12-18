@@ -1,78 +1,158 @@
 package com.ulpro.animalrecognizer
+
 import android.content.Context
-import android.os.AsyncTask
-import android.util.Log
-import android.widget.Toast
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import okhttp3.*
 import org.json.JSONObject
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import java.io.IOException
 
 class ServerConnection(private val context: Context) {
 
-    fun login(correo: String, contraseña: String, callback: (Boolean, String?) -> Unit) {
-        val loginUrl = "${ServerConfig.BASE_URL}usuarios.php"
-        LoginTask(correo, contraseña, callback).execute(loginUrl)
+    private val client = OkHttpClient()
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private fun endpoint(path: String): String {
+        return ServerConfig.BASE_URL.trimEnd('/') + "/" + path.trimStart('/')
     }
 
-    private inner class LoginTask(
-        private val correo: String,
-        private val contraseña: String,
-        private val callback: (Boolean, String?) -> Unit
-    ) : AsyncTask<String, Void, Pair<Boolean, String?>>() {
+    private fun <T> onMain(block: () -> T) {
+        if (Looper.myLooper() == Looper.getMainLooper()) block()
+        else mainHandler.post { block() }
+    }
 
-        override fun doInBackground(vararg params: String?): Pair<Boolean, String?> {
-            val url = URL(params[0])
-            val connection = url.openConnection() as HttpURLConnection
-            var resultMessage: String? = null
+    fun login(
+        usuarioOCorreo: String,
+        password: String,
+        callback: (Boolean, Any?) -> Unit
+    ) {
+        val url = endpoint("/api/usuarios/login.php")
+        val dispositivo = "Android ${Build.VERSION.RELEASE} - ${Build.MODEL}"
 
-            try {
-                connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-                connection.doOutput = true
+        val formBody = FormBody.Builder()
+            .add("usuario_o_correo", usuarioOCorreo)
+            .add("password", password)
+            .add("dispositivo", dispositivo)
+            .build()
 
-                val postData = "correo=$correo&contraseña=$contraseña"
-                val outputStream = OutputStreamWriter(connection.outputStream)
-                outputStream.write(postData)
-                outputStream.flush()
-                outputStream.close()
+        val request = Request.Builder()
+            .url(url)
+            .post(formBody)
+            .build()
 
-                val responseCode = connection.responseCode
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = connection.inputStream
-                    val response = inputStream.bufferedReader().use { it.readText() }
-
-                    val jsonResponse = JSONObject(response)
-                    val success = jsonResponse.optBoolean("success", false)
-
-                    return if (success) {
-                        val usuarioId = jsonResponse.optString("usuario_id", "")
-                        val nombreUsuario = jsonResponse.optString("nombre_usuario", "")
-                        Pair(true, if (usuarioId.isNotEmpty() && nombreUsuario.isNotEmpty()) "$usuarioId|$nombreUsuario" else null)
-                    } else {
-                        val errorMessage = jsonResponse.optString("error", "Error desconocido")
-                        Pair(false, errorMessage)
-                    }
-                } else {
-                    resultMessage = "Error: Código de respuesta $responseCode"
-                    return Pair(false, resultMessage)
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                onMain {
+                    callback(false, "Error de red: ${e.localizedMessage ?: "desconocido"}")
                 }
-            } catch (e: Exception) {
-                Log.e("ServerConnection", "Error en la conexión", e)
-                resultMessage = "Error en la conexión: ${e.message}"
-                return Pair(false, resultMessage)
-            } finally {
-                connection.disconnect()
             }
-        }
 
-        override fun onPostExecute(result: Pair<Boolean, String?>) {
-            if (result.first) {
-                callback(true, result.second)
-            } else {
-                Toast.makeText(context, "Error: ${result.second}", Toast.LENGTH_SHORT).show()
-                callback(false, result.second)
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string().orEmpty()
+
+                val json = try {
+                    JSONObject(body)
+                } catch (_: Exception) {
+                    onMain { callback(false, "Respuesta inválida del servidor (${response.code})") }
+                    return
+                }
+
+                // Error: {"error":"..."}
+                if (json.has("error")) {
+                    onMain { callback(false, json.optString("error", "Error desconocido")) }
+                    return
+                }
+
+                // Éxito: {"mensaje":"...", "token":"...", "usuario":{...}}
+                val token = json.optString("token", "")
+                val mensaje = json.optString("mensaje", "")
+
+                if (token.isNotBlank()) {
+                    onMain { callback(true, token) } // ✅ SOLO token
+                } else {
+                    onMain {
+                        callback(false, if (mensaje.isNotBlank()) mensaje else "Respuesta incompleta del servidor")
+                    }
+                }
             }
-        }
+        })
     }
+
+    fun verifySession(
+        token: String,
+        callback: (VerifyResult) -> Unit
+    ) {
+        val url = endpoint("/api/usuarios/verificar_sesion.php")
+
+        val formBody = FormBody.Builder()
+            .add("token", token)
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .post(formBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                onMain {
+                    callback(VerifyResult.NetworkError("No se pudo conectar al servidor"))
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string().orEmpty()
+
+                val json = try {
+                    JSONObject(body)
+                } catch (_: Exception) {
+                    onMain { callback(VerifyResult.ServerError("Respuesta inválida del servidor (${response.code})")) }
+                    return
+                }
+
+                // {"error":"..."} (405/500 u otros)
+                if (json.has("error")) {
+                    onMain { callback(VerifyResult.ServerError(json.optString("error", "Error desconocido"))) }
+                    return
+                }
+
+                // {"activo": false, "mensaje":"No se envió el campo 'token'..." } (400)
+                // {"activo": true/false, "mensaje":"..." }
+                if (json.has("activo")) {
+                    val activo = json.optBoolean("activo", false)
+                    val mensaje = json.optString("mensaje", "")
+
+                    if (activo) {
+                        val usuarioJson = json.optJSONObject("usuario")
+                        val paquete = usuarioJson?.optString("paquete_predeterminado", null)
+
+                        onMain {
+                            callback(
+                                VerifyResult.Active(
+                                    mensaje = mensaje,
+                                    paquetePredeterminado = paquete
+                                )
+                            )
+                        }
+                    } else {
+                        onMain {
+                            callback(VerifyResult.Inactive(mensaje))
+                        }
+                    }
+                    return
+                }
+
+
+                onMain { callback(VerifyResult.ServerError("Respuesta incompleta del servidor")) }
+            }
+        })
+    }
+}
+
+sealed class VerifyResult {
+    data class Active(val mensaje: String, val paquetePredeterminado: String?) : VerifyResult()
+    data class Inactive(val mensaje: String) : VerifyResult()
+    data class NetworkError(val mensaje: String) : VerifyResult()
+    data class ServerError(val mensaje: String) : VerifyResult()
 }

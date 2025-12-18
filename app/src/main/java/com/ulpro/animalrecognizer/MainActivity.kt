@@ -1,7 +1,9 @@
 package com.ulpro.animalrecognizer
 
+import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
@@ -12,77 +14,112 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.edit
 import cn.pedant.SweetAlert.SweetAlertDialog
-import kotlin.compareTo
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
     private var lastClickTime: Long = 0
+
+    // ✅ Dialogo bloqueante para verificación de sesión
+    private var sessionCheckDialog: SweetAlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
+
+        // Config por primera vez (tu lógica original)
         val firstRunPreferences = getSharedPreferences("firstRunConfig", MODE_PRIVATE)
         val isFirstRun = firstRunPreferences.getBoolean("isFirstRun", true)
-        val animalLogo: ImageView = findViewById(R.id.AnimalLogo)
+
         if (isFirstRun) {
             val serverPreferences = getSharedPreferences("serverConfig", MODE_PRIVATE)
-            serverPreferences.edit {
-                putString("serverUrl", "http://192.168.100.126/avistamiento/")
-                apply()
-            }
+            serverPreferences.edit()
+                .putString("serverUrl", "http://192.168.100.41/AnimalRecognizer-API/")
+                .apply()
+
             Toast.makeText(this, "Ajustes del servidor aplicados", Toast.LENGTH_SHORT).show()
-            firstRunPreferences.edit {
-                putBoolean("isFirstRun", false)
-                apply()
-            }
+
+            firstRunPreferences.edit()
+                .putBoolean("isFirstRun", false)
+                .apply()
         }
 
         ServerConfig.initialize(this)
-        sharedPreferences = getSharedPreferences("userSession", MODE_PRIVATE)
         requestEnableNotifications()
 
-        if (isUserLoggedIn()) {
-            redirectToProgressActivity()
-        }
-
+        val animalLogo: ImageView = findViewById(R.id.AnimalLogo)
         val emailEditText: EditText = findViewById(R.id.emailEditText)
         val passwordEditText: EditText = findViewById(R.id.passwordEditText)
         val loginButton: Button = findViewById(R.id.loginButton)
 
+        // ✅ Bloqueo/Desbloqueo UI mientras valida sesión automática
+        fun setUiEnabled(enabled: Boolean) {
+            emailEditText.isEnabled = enabled
+            passwordEditText.isEnabled = enabled
+            loginButton.isEnabled = enabled
+            animalLogo.isEnabled = enabled
+        }
+
+        // ✅ Mostrar loader bloqueante SOLO si hay token (o sea, hay algo que verificar)
+        val existingToken = TokenStore.getToken(this)
+        if (!existingToken.isNullOrBlank()) {
+            setUiEnabled(false)
+            sessionCheckDialog = SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE).apply {
+                titleText = "Verificando sesión..."
+                setCancelable(false) // ✅ no se puede cerrar ni tocar fuera
+                show()
+            }
+        }
+
+        // ✅ Sesión basada SOLO en token cifrado
+        checkLoginStatus { loggedIn ->
+            runOnUiThread {
+                // cerrar loader y habilitar UI siempre que termine
+                sessionCheckDialog?.dismissWithAnimation()
+                sessionCheckDialog = null
+                setUiEnabled(true)
+
+                if (loggedIn) {
+                    redirectToProgressActivity()
+                }
+            }
+        }
+
         loginButton.setOnClickListener {
-            val correo = emailEditText.text.toString()
+            val usuarioOCorreo = emailEditText.text.toString().trim()
             val contrasena = passwordEditText.text.toString()
 
-            if (correo.isNotEmpty() && contrasena.isNotEmpty()) {
+            if (usuarioOCorreo.isNotEmpty() && contrasena.isNotEmpty()) {
                 val loadingDialog = SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE).apply {
                     titleText = "Verificando..."
                     setCancelable(false)
                     show()
                 }
 
-                val serverConnection = ServerConnection(this)
-                serverConnection.login(correo, contrasena) { success, result ->
-                    loadingDialog.dismissWithAnimation()
+                ServerConnection(this).login(usuarioOCorreo, contrasena) { success, result ->
+                    runOnUiThread {
+                        loadingDialog.dismissWithAnimation()
 
-                    if (success && result != null) {
-                        val (usuarioId, nombreUsuario) = result.split("|")
-                        saveUserSession(correo, usuarioId, nombreUsuario)
+                        if (success) {
+                            val token = result as String
+                            // ✅ guardar SOLO token (cifrado)
+                            TokenStore.saveToken(this, token)
 
-                        SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE).apply {
-                            titleText = "Acceso concedido"
-                            confirmText = "Aceptar"
-                            setConfirmClickListener {
-                                dismissWithAnimation()
-                                redirectToProgressActivity()
+                            SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE).apply {
+                                titleText = "Acceso concedido"
+                                confirmText = "Aceptar"
+                                setConfirmClickListener {
+                                    dismissWithAnimation()
+                                    redirectToProgressActivity()
+                                }
+                                show()
                             }
-                            show()
+                        } else {
+                            val msg = (result as? String) ?: "Error desconocido"
+                            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(this, "Error en el inicio de sesión: ${result ?: "Desconocido"}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
@@ -101,24 +138,61 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun isUserLoggedIn(): Boolean {
-        val email = sharedPreferences.getString("userEmail", null)
-        val userId = sharedPreferences.getString("usuario_id", null)
-        return email != null && userId != null
+    private fun hasInternet(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    private fun saveUserSession(email: String, userId: String, nombreUsuario: String) {
-        sharedPreferences.edit {
-            putString("userEmail", email)
-            putString("usuario_id", userId)
-            putString("nombre_usuario", nombreUsuario)
-            apply()
+    private fun checkLoginStatus(done: (Boolean) -> Unit) {
+        val token = TokenStore.getToken(this)
+
+        // Sin token => no sesión (no hay nada que verificar)
+        if (token.isNullOrBlank()) {
+            done(false)
+            return
+        }
+
+        // Sin internet => permitir modo sin conexión
+        if (!hasInternet()) {
+            done(true)
+            return
+        }
+
+        // Con internet => verificar por POST
+        ServerConnection(this).verifySession(token) { result ->
+            runOnUiThread {
+                when (result) {
+                    is VerifyResult.Active -> {
+                        // ✅ guardar paquete para uso posterior
+                        result.paquetePredeterminado?.let {
+                            UserPrefs.savePaquete(this, it)
+                        }
+                        done(true)
+                    }
+
+                    is VerifyResult.Inactive -> {
+                        TokenStore.clearToken(this)
+                        UserPrefs.clear(this)
+                        done(false)
+                    }
+
+                    is VerifyResult.ServerError -> {
+                        done(false)
+                    }
+
+                    is VerifyResult.NetworkError -> {
+                        // único caso offline permitido
+                        done(true)
+                    }
+                }
+            }
         }
     }
 
     private fun redirectToProgressActivity() {
-        val intent = Intent(this, ProgressActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, ProgressActivity::class.java))
         finish()
     }
 
@@ -132,5 +206,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             Log.d("NotificationCheck", "Las notificaciones están habilitadas.")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // evitar window leak por si la activity muere en medio de la verificación
+        sessionCheckDialog?.dismissWithAnimation()
+        sessionCheckDialog = null
     }
 }

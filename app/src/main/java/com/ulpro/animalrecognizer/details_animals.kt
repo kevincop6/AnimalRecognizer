@@ -2,72 +2,89 @@ package com.ulpro.animalrecognizer
 
 import android.app.Dialog
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Base64
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.view.ViewGroup
+import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import cn.pedant.SweetAlert.SweetAlertDialog
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
-import android.view.ViewGroup
-import android.widget.ImageButton
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.collections.plusAssign
-import kotlin.text.append
 
 class details_animals : AppCompatActivity() {
+
     private lateinit var imageView: ImageView
-    private val imageList = mutableListOf<Bitmap>() // Lista global de imágenes
-    private var currentIndex = 0 // Índice global
+    private val imageUrlList = mutableListOf<String>()
+    private var currentIndex = 0
+
     private lateinit var textToSpeech: TextToSpeech
     private var currentText = ""
     private var currentPosition = 0
+
+    private val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(40, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_details_animals)
-        val buttonReadAll = findViewById<ImageButton>(R.id.buttonReadDescription)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        val animalId = intent.getIntExtra("animalId", -1)
-        if (animalId != -1) {
-            fetchAnimalDetails(animalId)
-        } else {
-            showErrorDialog("ID de animal no válido")
+        imageView = findViewById(R.id.imageView)
+
+        // Fullscreen al tocar la imagen (carga por URL)
+        imageView.setOnClickListener {
+            if (imageUrlList.isNotEmpty() && currentIndex in imageUrlList.indices) {
+                val dialog = Dialog(this)
+                dialog.setContentView(R.layout.dialog_fullscreen_image)
+                val fullScreenImageView = dialog.findViewById<ImageView>(R.id.fullScreenImageView)
+
+                Glide.with(this)
+                    .load(imageUrlList[currentIndex])
+                    .into(fullScreenImageView)
+
+                dialog.show()
+            }
         }
 
+        setupImageNavigationButtons()
+
+        // Show/Hide details
         val buttonShowHideDetails = findViewById<Button>(R.id.buttonShowHideDetails)
         val detailsLayout = findViewById<LinearLayout>(R.id.detailsLayout)
         val textViewDescription = findViewById<TextView>(R.id.textViewDescription)
 
         buttonShowHideDetails.setOnClickListener {
-            if (textViewDescription.maxLines == 5) {
-                textViewDescription.maxLines = Int.MAX_VALUE
-            } else {
-                textViewDescription.maxLines = 5
-            }
+            textViewDescription.maxLines = if (textViewDescription.maxLines == 5) Int.MAX_VALUE else 5
+
             if (detailsLayout.visibility == View.GONE) {
                 detailsLayout.visibility = View.VISIBLE
                 buttonShowHideDetails.text = getString(R.string.hide_details)
@@ -77,17 +94,8 @@ class details_animals : AppCompatActivity() {
             }
         }
 
-        imageView = findViewById(R.id.imageView)
-        imageView.setOnClickListener {
-            if (imageList.isNotEmpty()) {
-                val dialog = Dialog(this)
-                dialog.setContentView(R.layout.dialog_fullscreen_image)
-                val fullScreenImageView = dialog.findViewById<ImageView>(R.id.fullScreenImageView)
-                fullScreenImageView.setImageBitmap(imageList[currentIndex])
-                dialog.show()
-            }
-        }
-        // Inicializar TextToSpeech
+        // TextToSpeech
+        val buttonReadAll = findViewById<ImageButton>(R.id.buttonReadDescription)
         textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 val result = textToSpeech.setLanguage(Locale("es", "ES"))
@@ -99,14 +107,17 @@ class details_animals : AppCompatActivity() {
 
         buttonReadAll.setOnClickListener {
             val allText = getAllTextFromTextViews(findViewById(R.id.main))
+
             if (textToSpeech.isSpeaking) {
                 textToSpeech.stop()
                 buttonReadAll.setImageResource(R.drawable.ic_play_circle_black_24dp)
             } else {
                 if (currentText != allText) {
                     currentText = allText
+                    currentPosition = 0
                 }
                 val textToRead = currentText.substring(currentPosition)
+
                 val params = Bundle()
                 params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "reading")
                 textToSpeech.speak(textToRead, TextToSpeech.QUEUE_FLUSH, params, "reading")
@@ -115,93 +126,39 @@ class details_animals : AppCompatActivity() {
         }
 
         textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {
-                // No se requiere acción al iniciar
-            }
-
+            override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
                 runOnUiThread {
-                    currentPosition = 0 // Reinicia la posición al finalizar
+                    currentPosition = 0
                     buttonReadAll.setImageResource(R.drawable.ic_refresh_24dp)
                 }
             }
+            override fun onError(utteranceId: String?) {}
+        })
 
-            override fun onError(utteranceId: String?) {
-                // Manejo de errores si es necesario
-            }
+        val animalId = intent.getIntExtra("animalId", -1)
+        if (animalId != -1) {
+            fetchAnimalDetails(animalId)
+        } else {
+            showErrorDialog("ID de animal no válido")
+        }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() { finish() }
         })
     }
-    private fun getAllTextFromTextViews(viewGroup: ViewGroup): String {
-        val stringBuilder = StringBuilder()
-        for (i in 0 until viewGroup.childCount) {
-            val child = viewGroup.getChildAt(i)
-            if (child is TextView && child.id != R.id.buttonShowHideDetails &&
-                child.id != R.id.textViewGallery && child.id != R.id.HorizontalViewGallery) {
-                stringBuilder.append(child.text).append("\n")
-            } else if (child is ViewGroup && child.id != R.id.HorizontalViewGallery) {
-                stringBuilder.append(getAllTextFromTextViews(child))
-            }
-        }
-        return stringBuilder.toString()
-    }
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::textToSpeech.isInitialized) {
-            textToSpeech.stop()
-            textToSpeech.shutdown()
-        }
-    }
-    private fun fetchRecommendations(animalId: Int) {
-        val url = "${ServerConfig.BASE_URL}recommendation.php?id=$animalId"
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewRecommendations)
-        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS) // Tiempo de espera para conectar
-                .readTimeout(10, TimeUnit.SECONDS)   // Tiempo de espera para leer datos
-                .writeTimeout(10, TimeUnit.SECONDS)  // Tiempo de espera para escribir datos
-                .build()
-
-            val request = Request.Builder().url(url).build()
-
-            try {
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
-
-                if (response.isSuccessful && responseBody != null) {
-                    val jsonArray = org.json.JSONArray(responseBody)
-                    val items = mutableListOf<RecommendationItem>()
-
-                    for (i in 0 until jsonArray.length()) {
-                        val jsonObject = jsonArray.getJSONObject(i)
-                        val id = jsonObject.getInt("id")
-                        val name = jsonObject.getString("name")
-                        val imageBase64 = jsonObject.getString("imageBase64")
-                        items.add(RecommendationItem(id, name, imageBase64))
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        recyclerView.adapter = RecommendationAdapter(items) { animalId ->
-                            val intent = Intent(this@details_animals, details_animals::class.java)
-                            intent.putExtra("animalId", animalId)
-                            startActivity(intent)
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        showErrorDialog("Error al obtener recomendaciones.")
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    showErrorDialog("Error: ${e.message}")
-                }
-            }
-        }
-    }
+    // =========================================================
+    // POST /api/animales/view_animal.php (id + token)
+    // =========================================================
     private fun fetchAnimalDetails(animalId: Int) {
-        fetchRecommendations(animalId)
+        val token = TokenStore.getToken(this)
+        if (token.isNullOrBlank()) {
+            showErrorDialog("Sesión no válida. Inicia sesión nuevamente.")
+            redirectToLogin()
+            return
+        }
+
         val loadingDialog = SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE).apply {
             titleText = "Cargando detalles..."
             setCancelable(false)
@@ -209,35 +166,61 @@ class details_animals : AppCompatActivity() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS) // Tiempo de espera para conectar
-                .readTimeout(10, TimeUnit.SECONDS)   // Tiempo de espera para leer datos
-                .writeTimeout(10, TimeUnit.SECONDS)  // Tiempo de espera para escribir datos
+            val url = ServerConfig.BASE_URL.trimEnd('/') + "/api/animales/view_animal.php"
+
+            val formBody = FormBody.Builder()
+                .add("id", animalId.toString())
+                .add("token", token)
                 .build()
 
-            val url = "${ServerConfig.BASE_URL}details_animals.php?id=$animalId"
-            val request = Request.Builder().url(url).build()
+            val request = Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build()
 
             try {
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
+                httpClient.newCall(request).execute().use { response ->
+                    val code = response.code
+                    val rawBody = response.body?.string().orEmpty()
 
-                withContext(Dispatchers.Main) {
-                    loadingDialog.dismissWithAnimation()
+                    withContext(Dispatchers.Main) { loadingDialog.dismissWithAnimation() }
 
-                    if (!response.isSuccessful || responseBody == null) {
-                        showErrorDialog("Error en la solicitud: ${response.message}")
-                        return@withContext
-                    }
+                    when (code) {
+                        200 -> {
+                            val json = JSONObject(rawBody)
+                            val animal = json.getJSONObject("animal")
+                            val recomendaciones = json.optJSONArray("recomendaciones")
 
-                    val jsonResponse = JSONObject(responseBody)
-                    val success = jsonResponse.getBoolean("success")
+                            withContext(Dispatchers.Main) {
+                                populateTextFieldsFromApi(animal)
+                                setupRecommendationsFromApi(recomendaciones)
+                            }
 
-                    if (success) {
-                        val data = jsonResponse.getJSONObject("data")
-                        populateUI(data)
-                    } else {
-                        showErrorDialog("No se encontraron detalles para el ID proporcionado.")
+                            animal.optJSONArray("urls_archivos_media")?.let { media ->
+                                withContext(Dispatchers.Main) {
+                                    populateImagesOnlinePrioritizingPrincipal(media)
+                                }
+                            } ?: withContext(Dispatchers.Main) {
+                                imageUrlList.clear()
+                                currentIndex = 0
+                            }
+                        }
+
+                        401 -> {
+                            TokenStore.clearToken(this@details_animals)
+                            val msg = try { JSONObject(rawBody).optString("mensaje", "Acceso denegado.") }
+                            catch (_: Exception) { "Acceso denegado." }
+                            withContext(Dispatchers.Main) {
+                                showErrorDialog(msg)
+                                redirectToLogin()
+                            }
+                        }
+
+                        else -> {
+                            val msg = try { JSONObject(rawBody).optString("mensaje", "Error ($code)") }
+                            catch (_: Exception) { "Error ($code)" }
+                            withContext(Dispatchers.Main) { showErrorDialog(msg) }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -249,96 +232,211 @@ class details_animals : AppCompatActivity() {
         }
     }
 
-    private fun populateUI(data: JSONObject) {
-        // Taxonomía
-        val taxonomia = data.optJSONObject("taxonomia")
-        if (taxonomia != null) {
-            findViewById<TextView>(R.id.textViewTitle).text = taxonomia.optString("nombre_es", "N/A")
-            findViewById<TextView>(R.id.textViewSubtitle).text = taxonomia.optString("nombre_in", "N/A")
-            findViewById<TextView>(R.id.textViewNombreEspanol).text = taxonomia.optString("nombre_es", "N/A")
-            findViewById<TextView>(R.id.textViewNombreIngles).text = taxonomia.optString("nombre_in", "N/A")
-            findViewById<TextView>(R.id.textViewNombreCientifico).text = taxonomia.optString("nombre_ci", "N/A")
-            findViewById<TextView>(R.id.textViewReino).text = taxonomia.optString("reino", "N/A")
-            findViewById<TextView>(R.id.textViewFilo).text = taxonomia.optString("filo", "N/A")
-            findViewById<TextView>(R.id.textViewClase).text = taxonomia.optString("clase", "N/A")
-            findViewById<TextView>(R.id.textViewOrden).text = taxonomia.optString("orden", "N/A")
-            findViewById<TextView>(R.id.textViewFamilia).text = taxonomia.optString("familia", "N/A")
-            findViewById<TextView>(R.id.textViewGenero).text = taxonomia.optString("genero", "N/A")
+    // =========================================================
+    // Textos según JSON real
+    // =========================================================
+    private fun populateTextFieldsFromApi(animal: JSONObject) {
+        findViewById<TextView>(R.id.textViewTitle).text = animal.optString("nombre_comun", "N/A")
+        findViewById<TextView>(R.id.textViewSubtitle).text = animal.optString("nombre_cientifico", "N/A")
+
+        findViewById<TextView>(R.id.textViewNombreEspanol).text = animal.optString("nombre_comun", "N/A")
+        findViewById<TextView>(R.id.textViewNombreIngles).text = animal.optString("nombre_ingles", "N/A")
+        findViewById<TextView>(R.id.textViewNombreCientifico).text = animal.optString("nombre_cientifico", "N/A")
+
+        animal.optJSONObject("taxonomia")?.let { tax ->
+            findViewById<TextView>(R.id.textViewReino).text = tax.optString("reino", "N/A")
+            findViewById<TextView>(R.id.textViewFilo).text = tax.optString("filo", "N/A")
+            findViewById<TextView>(R.id.textViewClase).text = tax.optString("clase", "N/A")
+            findViewById<TextView>(R.id.textViewOrden).text = tax.optString("orden", "N/A")
+            findViewById<TextView>(R.id.textViewFamilia).text = tax.optString("familia", "N/A")
+            findViewById<TextView>(R.id.textViewGenero).text = tax.optString("genero", "N/A")
         }
 
-        // Distribución
-        val distribucion = data.optJSONObject("distribucion")
-        if (distribucion != null) {
-            val distribucionData = distribucion.optJSONObject("distribucion")
-            val paisesExtant = distribucionData?.optJSONArray("paises_extant")?.let { jsonArray ->
-                (0 until jsonArray.length()).map { jsonArray.getString(it) }
-            } ?: emptyList()
-            val paisesExtinct = distribucionData?.optJSONArray("paises_extinct")?.let { jsonArray ->
-                (0 until jsonArray.length()).map { jsonArray.getString(it) }
-            } ?: emptyList()
-            val habitat = distribucion.optJSONArray("habitat")?.let { jsonArray ->
-                (0 until jsonArray.length()).map { jsonArray.getString(it) }
-            } ?: emptyList()
+        animal.optJSONObject("distribucion")?.let { dist ->
+            val core = dist.optJSONObject("distribucion")
+            val extant = core?.optJSONArray("paises_extant")?.toStringList().orEmpty()
+            val extinct = core?.optJSONArray("paises_extinct")?.toStringList().orEmpty()
+            val habitat = dist.optJSONArray("habitat")?.toStringList().orEmpty()
 
             findViewById<TextView>(R.id.textViewDistribution).text =
-                "Existente: ${paisesExtant.joinToString(", ")}\nExtinto: ${paisesExtinct.joinToString(", ")}"
-            findViewById<TextView>(R.id.textViewHabitat).text = habitat.joinToString(", ")
+                "Existente: ${if (extant.isEmpty()) "N/A" else extant.joinToString(", ")}\n" +
+                        "Extinto: ${if (extinct.isEmpty()) "N/A" else extinct.joinToString(", ")}"
+
+            findViewById<TextView>(R.id.textViewHabitat).text =
+                if (habitat.isEmpty()) "N/A" else habitat.joinToString(", ")
+
             findViewById<TextView>(R.id.textViewConservationStatus).text =
-                distribucion.optString("estatus_conservacion", "N/A")
+                dist.optString("estatus_conservacion", "N/A")
 
-            // Fuente
-            val fuente = distribucion.optJSONObject("fuente")
-            if (fuente != null) {
-                val nombreFuente = fuente.optString("nombre", "N/A")
-                findViewById<TextView>(R.id.textViewSource).text = nombreFuente
+            dist.optJSONObject("fuente")?.optString("nombre", null)?.let { fuenteNombre ->
+                findViewById<TextView>(R.id.textViewSource).text = fuenteNombre
             }
         }
 
-        // Descripción
-        val descripcion = data.optJSONObject("descripcion")?.optJSONObject("descripcion")
-        findViewById<TextView>(R.id.textViewDescription).text =
-            descripcion?.optString("texto", "Descripción no disponible") ?: "Descripción no disponible"
+        val desc = animal.optJSONObject("descripcion")
+            ?.optJSONObject("descripcion")
+            ?.optString("texto", "Descripción no disponible")
+            ?: "Descripción no disponible"
 
-        // Decodificar imágenes Base64 y almacenarlas en la lista global
-        val imagenes = data.optJSONObject("imagenes")?.optJSONArray("imagenes")
-        if (imagenes != null) {
-            for (i in 0 until imagenes.length()) {
-                val base64Image = imagenes.getJSONObject(i).optString("base64", "")
-                if (base64Image.isNotEmpty()) {
-                    val imageBytes = Base64.decode(base64Image.split(",")[1], Base64.DEFAULT)
-                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                    imageList.add(bitmap)
-                }
-            }
+        findViewById<TextView>(R.id.textViewDescription).text = desc
+    }
+
+    // =========================================================
+    // ✅ Imágenes "en línea" con Glide:
+    // - arma lista de URLs (N archivos)
+    // - principal primero
+    // - muestra principal inmediatamente
+    // - luego prefetch del resto para que Next sea instantáneo
+    // =========================================================
+    private fun populateImagesOnlinePrioritizingPrincipal(mediaArray: JSONArray) {
+        imageUrlList.clear()
+        currentIndex = 0
+
+        val seen = HashSet<String>()
+        val entries = (0 until mediaArray.length()).mapNotNull { i ->
+            val obj = mediaArray.optJSONObject(i) ?: return@mapNotNull null
+            val raw = obj.optString("url_archivo", "").trim()
+            if (raw.isBlank()) return@mapNotNull null
+
+            val url = normalizeUrl(raw)
+            if (!seen.add(url)) return@mapNotNull null
+
+            val isPrincipal = obj.optInt("es_principal", 0) == 1
+            MediaEntry(index = i, isPrincipal = isPrincipal, url = url)
         }
 
+        if (entries.isEmpty()) return
+
+        val ordered = entries.sortedWith(
+            compareByDescending<MediaEntry> { it.isPrincipal }
+                .thenBy { it.index }
+        )
+
+        imageUrlList.addAll(ordered.map { it.url })
+
+        // Mostrar inmediatamente la primera (principal si existe)
+        showCurrentImage()
+
+        // Prefetch del resto (sin bloquear UI)
+        // Nota: Glide maneja caché; esto hace que "Next" se sienta inmediato.
+        CoroutineScope(Dispatchers.Main).launch {
+            for (i in 1 until imageUrlList.size) {
+                Glide.with(this@details_animals)
+                    .load(imageUrlList[i])
+                    .preload()
+            }
+        }
+    }
+
+    private data class MediaEntry(val index: Int, val isPrincipal: Boolean, val url: String)
+
+    private fun showCurrentImage() {
+        if (imageUrlList.isEmpty() || currentIndex !in imageUrlList.indices) return
+
+        Glide.with(this)
+            .load(imageUrlList[currentIndex])
+            .into(imageView)
+    }
+
+    // =========================================================
+    // Destacados: recomendaciones[] (URL + click => details_animals)
+    // =========================================================
+    private fun setupRecommendationsFromApi(recs: JSONArray?) {
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewRecommendations)
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
+        if (recs == null || recs.length() == 0) {
+            recyclerView.adapter = RecommendationAdapter(emptyList()) { }
+            return
+        }
+
+        val items = mutableListOf<RecommendationItem>()
+        for (i in 0 until recs.length()) {
+            val obj = recs.optJSONObject(i) ?: continue
+            val id = obj.optInt("id", -1)
+            val nombre = obj.optString("nombre", "").trim()
+            val img = obj.optString("imagen_principal", "").trim()
+            if (id == -1 || nombre.isBlank() || img.isBlank()) continue
+
+            items.add(
+                RecommendationItem(
+                    id = id,
+                    name = nombre,
+                    imageUrl = normalizeUrl(img)
+                )
+            )
+        }
+
+        recyclerView.adapter = RecommendationAdapter(items) { clickedId ->
+            val intent = Intent(this@details_animals, details_animals::class.java)
+            intent.putExtra("animalId", clickedId)
+            startActivity(intent)
+        }
+    }
+
+    // =========================================================
+    // Prev / Next (con URLs)
+    // =========================================================
+    private fun setupImageNavigationButtons() {
         val buttonPrevious = findViewById<Button>(R.id.buttonPrevious)
         val buttonNext = findViewById<Button>(R.id.buttonNext)
 
-        // Función para actualizar la imagen mostrada
-        fun updateImage() {
-            if (imageList.isNotEmpty()) {
-                imageView.setImageBitmap(imageList[currentIndex])
-            }
-        }
-
-        // Configurar botones para navegar entre imágenes
         buttonPrevious.setOnClickListener {
-            if (currentIndex > 0) {
+            if (imageUrlList.isNotEmpty() && currentIndex > 0) {
                 currentIndex--
-                updateImage()
+                showCurrentImage()
             }
         }
 
         buttonNext.setOnClickListener {
-            if (currentIndex < imageList.size - 1) {
+            if (imageUrlList.isNotEmpty() && currentIndex < imageUrlList.size - 1) {
                 currentIndex++
-                updateImage()
+                showCurrentImage()
             }
         }
+    }
 
-        // Mostrar la primera imagen al iniciar
-        updateImage()
+    // =========================================================
+    // TTS: excluir destacados
+    // =========================================================
+    private fun getAllTextFromTextViews(viewGroup: ViewGroup): String {
+        val sb = StringBuilder()
+        for (i in 0 until viewGroup.childCount) {
+            val child = viewGroup.getChildAt(i)
+
+            if (child.id == R.id.HorizontalViewGallery || child.id == R.id.recyclerViewRecommendations) {
+                continue
+            }
+
+            if (child is TextView && child.id != R.id.textViewGallery) {
+                sb.append(child.text).append("\n")
+            } else if (child is ViewGroup) {
+                sb.append(getAllTextFromTextViews(child))
+            }
+        }
+        return sb.toString()
+    }
+
+    // =========================================================
+    // Helpers
+    // =========================================================
+    private fun normalizeUrl(pathOrUrl: String): String {
+        val s = pathOrUrl.trim()
+        return if (s.startsWith("http://", true) || s.startsWith("https://", true)) {
+            s
+        } else {
+            ServerConfig.BASE_URL.trimEnd('/') + "/" + s.trimStart('/')
+        }
+    }
+
+    private fun JSONArray.toStringList(): List<String> =
+        (0 until length()).mapNotNull { idx ->
+            optString(idx, null)?.takeIf { it.isNotBlank() }
+        }
+
+    private fun redirectToLogin() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
     private fun showErrorDialog(message: String) {
@@ -347,5 +445,13 @@ class details_animals : AppCompatActivity() {
             .setContentText(message)
             .setConfirmText("Cerrar")
             .show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::textToSpeech.isInitialized) {
+            textToSpeech.stop()
+            textToSpeech.shutdown()
+        }
     }
 }

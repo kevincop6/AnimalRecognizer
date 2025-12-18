@@ -1,103 +1,162 @@
 package com.ulpro.animalrecognizer
 
 import android.content.Intent
-import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentManager
 import cn.pedant.SweetAlert.SweetAlertDialog
 
-class MainNavigationActivity : AppCompatActivity() {
-    private lateinit var sharedPreferences: SharedPreferences
+class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackChangedListener {
+
+    private lateinit var bottomNavHelper: BottomNavigationHelper
+
+    private val sessionCheckHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val sessionCheckIntervalMs = 60_000L
+
+    private var uiReady = false // ✅ evita arrancar el loop antes de setupUi()
+
+    private val sessionCheckRunnable = object : Runnable {
+        override fun run() {
+            val token = TokenStore.getToken(this@MainNavigationActivity)
+            if (token.isNullOrBlank()) {
+                logoutAndRedirect()
+                return
+            }
+
+            if (!hasInternet()) {
+                sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                return
+            }
+
+            ServerConnection(this@MainNavigationActivity).verifySession(token) { result ->
+                when (result) {
+                    is VerifyResult.Active -> {
+                        result.paquetePredeterminado?.let { UserPrefs.savePaquete(this@MainNavigationActivity, it) }
+                        sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                    }
+
+                    is VerifyResult.Inactive,
+                    is VerifyResult.ServerError -> {
+                        logoutAndRedirect()
+                    }
+
+                    is VerifyResult.NetworkError -> {
+                        sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_navigation)
 
-        sharedPreferences = getSharedPreferences("userSession", MODE_PRIVATE)
+        ServerConfig.initialize(this)
 
-
-
-        val fragmentToOpen = intent.getStringExtra("open_fragment")
-        val allowedFragments = listOf("SettingsFragment") // Lista de fragmentos permitidos
-
-        if (allowedFragments.contains(fragmentToOpen)) {
-            // Deshabilitar todos los botones de navegación
-            findViewById<View>(R.id.homeButton).isEnabled = false
-            findViewById<View>(R.id.profileButton).isEnabled = false
-            findViewById<View>(R.id.SettingsButton).isEnabled = false
-
-            // Abrir SettingsFragment
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, SettingsFragment())
-                .commit()
-        }else {
-            if (isUserLoggedIn()) {
-                val bottomNavigationHelper = BottomNavigationHelper(this, supportFragmentManager)
-                bottomNavigationHelper.setup(R.id.homeButton)
-
-                // Mostrar el AvistamientosFragment al iniciar la actividad
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, AvistamientosFragment())
-                    .addToBackStack(null) // Agregar al stack de retroceso
-                    .commit()
-                // Marcar el botón de inicio como activo
-                bottomNavigationHelper.markActiveButton(
-                    findViewById(R.id.homeButton),
-                    R.color.orange,
-                    R.color.dark_gray
-                )
-            } else {
-                redirectToLoginActivity()  // Si no hay sesión, vuelve al login
-            }
-        }
-    }
-    @Suppress("DEPRECATION")
-    override fun onBackPressed() {
-        val fragmentToOpen = intent.getStringExtra("open_fragment")
-        // Si la actividad se inició para mostrar SettingsFragment, al presionar atrás,
-        // debemos finalizar esta actividad para volver a MainActivity.
-        if (fragmentToOpen == "SettingsFragment") {
-            finish()
+        val token = TokenStore.getToken(this)
+        if (token.isNullOrBlank()) {
+            logoutAndRedirect()
             return
         }
 
-        // Si hay más de un fragmento en la pila de retroceso, volvemos al anterior.
-        // De lo contrario, si estamos en el fragmento inicial, mostramos un diálogo de confirmación para salir.
-        if (supportFragmentManager.backStackEntryCount > 1) {
-            super.onBackPressed()
+        if (hasInternet()) {
+            ServerConnection(this).verifySession(token) { result ->
+                when (result) {
+                    is VerifyResult.Active -> {
+                        result.paquetePredeterminado?.let { UserPrefs.savePaquete(this, it) }
+                        setupUi(savedInstanceState)
+                    }
+
+                    is VerifyResult.Inactive,
+                    is VerifyResult.ServerError -> {
+                        logoutAndRedirect()
+                    }
+
+                    is VerifyResult.NetworkError -> {
+                        setupUi(savedInstanceState) // permitir “offline”
+                    }
+                }
+            }
         } else {
-            // Si estamos en el primer fragmento o no hay ninguno, mostramos el diálogo para salir.
-            SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
-                .setTitleText("¿Estás seguro de que deseas salir?")
-                .setContentText("Se cerrará la aplicación.")
-                .setConfirmText("Sí")
-                .setCancelText("No")
-                .setConfirmClickListener {
-                    finishAffinity()
-                }
-                .setCancelClickListener { dialog ->
-                    dialog.dismissWithAnimation() // Cierra el diálogo
-                }
-                .show()
+            setupUi(savedInstanceState)
         }
     }
-    private fun isUserLoggedIn(): Boolean {
-        val usuarioId = sharedPreferences.getString("usuario_id", null) // Verificar clave correcta
-        val email = sharedPreferences.getString("userEmail", null)
-        return !usuarioId.isNullOrEmpty() && !email.isNullOrEmpty()  // Evita cadenas vacías
+
+    override fun onStart() {
+        super.onStart()
+        // ✅ solo si la UI ya está lista
+        if (uiReady) {
+            sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
+            sessionCheckHandler.post(sessionCheckRunnable)
+        }
     }
 
-    // Redirigir al usuario a AvistamientosActivity
-    private fun redirectToAvistamientosActivity() {
-        val intent = Intent(this, MainNavigationActivity::class.java)
-        startActivity(intent)
-        finish()  // Cierra ProgressActivity para evitar que el usuario regrese
+    override fun onStop() {
+        super.onStop()
+        sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
     }
 
-    // Redirigir al usuario a MainActivity (login)
+    private fun setupUi(savedInstanceState: Bundle?) {
+        bottomNavHelper = BottomNavigationHelper(this, supportFragmentManager)
+        bottomNavHelper.setup()
+
+        supportFragmentManager.addOnBackStackChangedListener(this)
+
+        if (savedInstanceState == null) {
+            val fragmentToOpen = intent.getStringExtra("open_fragment")
+            if (fragmentToOpen == "SettingsFragment") {
+                bottomNavHelper.switchFragment(SettingsFragment(), "SETTINGS_FRAGMENT")
+            } else {
+                bottomNavHelper.showInitialFragment()
+            }
+        }
+
+        uiReady = true // ✅ marcar listo
+        sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
+        sessionCheckHandler.post(sessionCheckRunnable) // ✅ arrancar el loop aquí (seguro)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                } else {
+                    SweetAlertDialog(this@MainNavigationActivity, SweetAlertDialog.WARNING_TYPE)
+                        .setTitleText("¿Deseas salir?")
+                        .setContentText("La aplicación se cerrará.")
+                        .setConfirmText("Sí")
+                        .setCancelText("No")
+                        .setConfirmClickListener { finishAffinity() }
+                        .setCancelClickListener { it.dismissWithAnimation() }
+                        .show()
+                }
+            }
+        })
+    }
+
+    override fun onBackStackChanged() {
+        bottomNavHelper.updateButtonState()
+    }
+
+    private fun logoutAndRedirect() {
+        sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
+        TokenStore.clearToken(this)
+        UserPrefs.clear(this)
+        redirectToLoginActivity()
+    }
+
+    private fun hasInternet(): Boolean {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private fun redirectToLoginActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-        finish()  // Cierra ProgressActivity para evitar navegación hacia atrás
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 }

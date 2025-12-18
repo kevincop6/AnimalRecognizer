@@ -25,15 +25,20 @@ class AdapterAnimalesFragment(
 
     override fun onBindViewHolder(holder: AnimalViewHolder, position: Int) {
         val animal = filteredAnimalList[position]
-        holder.animalNameTextView.text = animal.name
 
-        // Cargar imagen usando Glide
-        Glide.with(holder.itemView.context)
-            .load(animal.imageBase64)
-            .placeholder(R.drawable.placeholder_image)
-            .into(holder.animalImageView)
+        holder.animalNameTextView.text = animal.nombre
 
-        // Manejar el clic en el elemento
+        val imageUrl = animal.imagenUrl
+        if (!imageUrl.isNullOrBlank()) {
+            Glide.with(holder.itemView)
+                .load(imageUrl)
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.placeholder_image)
+                .into(holder.animalImageView)
+        } else {
+            holder.animalImageView.setImageResource(R.drawable.placeholder_image)
+        }
+
         holder.itemView.setOnClickListener {
             val intent = Intent(holder.itemView.context, details_animals::class.java).apply {
                 putExtra("animalId", animal.id)
@@ -45,10 +50,10 @@ class AdapterAnimalesFragment(
     override fun getItemCount(): Int = filteredAnimalList.size
 
     fun addAnimals(newAnimals: List<Animal>) {
-        val uniqueAnimals = newAnimals.filter { newAnimal ->
-            animalList.none { it.id == newAnimal.id }
-        }
-        animalList.addAll(uniqueAnimals)
+        val unique = newAnimals.filter { n -> animalList.none { it.id == n.id } }
+        if (unique.isEmpty()) return
+
+        animalList.addAll(unique)
         filteredAnimalList = animalList.toMutableList()
         notifyDataSetChanged()
     }
@@ -56,15 +61,16 @@ class AdapterAnimalesFragment(
     override fun getFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(constraint: CharSequence?): FilterResults {
-                val query = constraint?.toString()?.lowercase() ?: ""
+                val query = constraint?.toString()?.trim()?.lowercase().orEmpty()
                 val filtered = if (query.isEmpty()) {
-                    animalList
+                    animalList.toMutableList()
                 } else {
-                    animalList.filter { it.name.lowercase().contains(query) }.toMutableList()
+                    animalList.filter { it.nombre.lowercase().contains(query) }.toMutableList()
                 }
                 return FilterResults().apply { values = filtered }
             }
 
+            @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
                 filteredAnimalList = results?.values as? MutableList<Animal> ?: mutableListOf()
                 notifyDataSetChanged()
