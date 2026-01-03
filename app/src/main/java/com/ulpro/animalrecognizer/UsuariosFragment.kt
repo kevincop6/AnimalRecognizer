@@ -1,8 +1,7 @@
 package com.ulpro.animalrecognizer
 
-import android.graphics.BitmapFactory
+import android.content.Intent
 import android.os.Bundle
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,118 +14,171 @@ import androidx.recyclerview.widget.RecyclerView
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
-import android.content.Intent
 
 class UsuariosFragment : Fragment() {
+
     private val sharedViewModel: SharedViewModel by activityViewModels()
+
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: UsersAdapterFragment
     private val userList: MutableList<User> = mutableListOf()
-    private val client = OkHttpClient() // Cliente reutilizable para cancelar solicitudes
+
+    private val client = OkHttpClient()
+
     private var currentPage = 1
-    private val limit = 5
-    private var totalPages = 1
+    private var isLoading = false
+    private var hayMas = true
+    private var currentQuery = ""
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_usuarios, container, false)
-        recyclerView = view.findViewById(R.id.rvUsers)
+    ): View {
 
-        // Configurar el RecyclerView
+        val view = inflater.inflate(R.layout.fragment_usuarios, container, false)
+
+        recyclerView = view.findViewById(R.id.rvUsers)
+        val progressBar: ProgressBar = view.findViewById(R.id.loadingProgressBar)
+
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = UsersAdapterFragment(userList)
         recyclerView.adapter = adapter
 
-        // Realizar la búsqueda
-        sharedViewModel.searchText.observe(viewLifecycleOwner) { searchText ->
-            client.dispatcher.cancelAll() // Cancela solicitudes en curso
-            userList.clear()
-            adapter.notifyDataSetChanged() // Limpia la lista antes de nuevas búsquedas
-
-            if (searchText.isNotBlank()) {
-                fetchUsers(searchText)
-            }
-        }
+        // 👉 CLICK EN USUARIO → ABRIR PERFIL
         adapter.setOnItemClickListener { userId ->
-            val intent = Intent(requireContext(), ProfileActivity::class.java)
-            intent.putExtra("usuario_id", userId)
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            intent.putExtra("open_profile_user_id", userId)
             startActivity(intent)
         }
+
+        // 🔹 Scroll infinito controlado
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(rv, dx, dy)
+
+                if (dy <= 0) return
+                if (isLoading || !hayMas) return
+
+                val lm = rv.layoutManager as LinearLayoutManager
+                val visible = lm.childCount
+                val total = lm.itemCount
+                val firstVisible = lm.findFirstVisibleItemPosition()
+
+                if ((visible + firstVisible) >= total && firstVisible >= 0) {
+                    fetchUsers(currentQuery, progressBar)
+                }
+            }
+        })
+
+        // 🔹 Observa texto desde SearchActivity
+        sharedViewModel.searchText.observe(viewLifecycleOwner) { searchText ->
+
+            val newQuery = searchText.trim()
+            if (newQuery == currentQuery) return@observe
+
+            client.dispatcher.cancelAll()
+
+            userList.clear()
+            adapter.notifyDataSetChanged()
+
+            currentPage = 1
+            hayMas = true
+            currentQuery = newQuery
+
+            if (currentQuery.isNotEmpty()) {
+                fetchUsers(currentQuery, progressBar)
+            }
+        }
+
         return view
     }
 
-    private fun fetchUsers(query: String) {
-        val progressBar: ProgressBar = requireView().findViewById(R.id.loadingProgressBar)
+    // --------------------------------------------------------------------
+
+    private fun fetchUsers(query: String, progressBar: ProgressBar) {
+        if (isLoading || !hayMas || query.isBlank()) return
+
+        isLoading = true
         progressBar.visibility = View.VISIBLE
 
-        val url = "${ServerConfig.BASE_URL}get_users.php?busqueda=$query&pagina=$currentPage&limite=$limit"
-        val request = Request.Builder().url(url).build()
+        val token = TokenStore.getToken(requireContext())
+        if (token.isNullOrBlank()) {
+            progressBar.visibility = View.GONE
+            isLoading = false
+            Toast.makeText(requireContext(), "Sesión inválida", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val url = ServerConfig.BASE_URL.trimEnd('/') +
+                "/api/usuarios/search_users.php"
+
+        val body = FormBody.Builder()
+            .add("token", token)
+            .add("pagina", currentPage.toString())
+            .add("busqueda", query)
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .build()
 
         client.newCall(request).enqueue(object : Callback {
+
             override fun onFailure(call: Call, e: IOException) {
                 requireActivity().runOnUiThread {
                     progressBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Error al obtener los datos", Toast.LENGTH_SHORT).show()
+                    isLoading = false
+                    Toast.makeText(
+                        requireContext(),
+                        "Error al obtener usuarios",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                response.body?.string()?.let { responseBody ->
-                    val jsonObject = JSONObject(responseBody)
-                    if (jsonObject.getBoolean("success")) {
-                        totalPages = jsonObject.getInt("total_paginas") // Actualiza el total de páginas
-                        val usuariosArray = jsonObject.getJSONArray("usuarios")
-                        requireActivity().runOnUiThread {
-                            for (i in 0 until usuariosArray.length()) {
-                                val userJson = usuariosArray.getJSONObject(i)
-                                val base64Image = userJson.optString("foto_perfil", "")
+                val bodyStr = response.body?.string().orEmpty()
+                val json = JSONObject(bodyStr)
 
-                                if (base64Image.isNotEmpty() && base64Image.contains("base64,")) {
-                                    try {
-                                        val base64Data = base64Image.substringAfter("base64,")
-                                        val imageBytes = Base64.decode(base64Data, Base64.DEFAULT)
-                                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                val usuarios = json.optJSONArray("usuarios")
+                hayMas = json.optBoolean("hay_mas", false)
 
-                                        val user = User(
-                                            id = userJson.getString("id"), // Agrega el ID del usuario
-                                            name = userJson.getString("nombre"),
-                                            username = userJson.getString("nombre_usuario"),
-                                            imageBitmap = bitmap
-                                        )
-                                        userList.add(user)
-                                    } catch (e: IllegalArgumentException) {
-                                        e.printStackTrace()
-                                    }
-                                }
-                            }
-                            adapter.notifyDataSetChanged()
-                            progressBar.visibility = View.GONE
+                requireActivity().runOnUiThread {
 
-                            // Cargar la siguiente página si es necesario
-                            if (currentPage < totalPages) {
-                                currentPage++
-                                fetchUsers(query) // Llama recursivamente para cargar la siguiente página
-                            }
-                        }
-                    } else {
-                        requireActivity().runOnUiThread {
-                            progressBar.visibility = View.GONE
-                        }
+                    if (usuarios == null) {
+                        // Sin resultados o error controlado
+                        progressBar.visibility = View.GONE
+                        isLoading = false
+                        hayMas = false
+                        return@runOnUiThread
                     }
+
+                    for (i in 0 until usuarios.length()) {
+                        val u = usuarios.getJSONObject(i)
+
+                        userList.add(
+                            User(
+                                id = u.getString("id"),
+                                name = u.getString("nombre_completo"),
+                                username = u.getString("nombre_usuario"),
+                                imageUrl = u.optString("foto_perfil"),
+                                likes = u.optInt("likes", 0)
+                            )
+                        )
+                    }
+
+                    adapter.notifyDataSetChanged()
+
+                    if (hayMas) {
+                        currentPage++
+                    }
+
+                    progressBar.visibility = View.GONE
+                    isLoading = false
                 }
             }
         })
-    }
-
-    // Función de extensión para validar si una cadena es Base64
-    private fun String.isBase64(): Boolean {
-        return try {
-            Base64.decode(this, Base64.DEFAULT)
-            true
-        } catch (e: IllegalArgumentException) {
-            false
-        }
     }
 }

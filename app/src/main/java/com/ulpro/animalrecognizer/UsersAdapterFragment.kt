@@ -1,51 +1,54 @@
 package com.ulpro.animalrecognizer
 
-import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-
-data class User(val id: String, val name: String, val username: String, val imageBitmap: Bitmap?)
+import com.bumptech.glide.Glide
 
 class UsersAdapterFragment(
-    private val userList: List<User>
-) : RecyclerView.Adapter<UsersAdapterFragment.UserViewHolder>() {
+    private val users: List<User>
+) : RecyclerView.Adapter<UsersAdapterFragment.ViewHolder>() {
 
-    private var onItemClickListener: ((String) -> Unit)? = null
+    private var onItemClick: ((String) -> Unit)? = null
 
     fun setOnItemClickListener(listener: (String) -> Unit) {
-        onItemClickListener = listener
+        onItemClick = listener
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.items_usuarios_fragment, parent, false)
-        return UserViewHolder(view)
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val imageView: ImageView = view.findViewById(R.id.userImageView)
+        val nameText: TextView = view.findViewById(R.id.userNameTextView)
+        val usernameText: TextView = view.findViewById(R.id.userUsernameTextView)
+        val likesText: TextView = view.findViewById(R.id.userLikesTextView)
     }
 
-    override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
-        val user = userList[position]
-        holder.bind(user)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.items_usuarios_fragment, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val user = users[position]
+
+        holder.nameText.text = user.name
+        holder.usernameText.text = "@${user.username}"
+        holder.likesText.text = user.likes.toString()
+
+        Glide.with(holder.itemView)
+            .load(user.imageUrl)
+            .placeholder(R.drawable.ic_default_profile)
+            .error(R.drawable.ic_default_profile)
+            .circleCrop()
+            .into(holder.imageView)
+
         holder.itemView.setOnClickListener {
-            onItemClickListener?.invoke(user.id)
+            onItemClick?.invoke(user.id)
         }
     }
 
-    override fun getItemCount(): Int = userList.size
-
-    class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val userNameTextView: TextView = itemView.findViewById(R.id.userNameTextView)
-        private val userUsernameTextView: TextView = itemView.findViewById(R.id.userUsernameTextView)
-        private val userImageView: ImageView = itemView.findViewById(R.id.userImageView)
-
-        fun bind(user: User) {
-            userNameTextView.text = user.name
-            userUsernameTextView.text = user.username
-            user.imageBitmap?.let {
-                userImageView.setImageBitmap(it)
-            }
-        }
-    }
+    override fun getItemCount(): Int = users.size
 }

@@ -27,7 +27,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // 1. Activa la ofuscación y reducción de código
+            isMinifyEnabled = true
+
+            // 2. Activa la eliminación de recursos (imágenes/xml) no usados
+            isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

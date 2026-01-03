@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,6 +8,7 @@
     android:background="@android:color/white"
     tools:context=".ProfileActivity">
 
+    <!-- FOTO PERFIL -->
     <ImageView
         android:id="@+id/profile_image"
         android:layout_width="80dp"
@@ -15,66 +17,86 @@
         android:layout_marginTop="16dp"
         android:background="@drawable/circular_image"
         android:clipToOutline="true"
-        android:scaleType="centerCrop" android:src="@drawable/ic_default_profile"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_default_profile"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- BOTÓN CERRAR SESIÓN -->
+    <Button
+        android:id="@+id/logOutButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cerrar sesión"
+        android:textAllCaps="false"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- NOMBRE -->
     <TextView
         android:id="@+id/user_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/user_email_default"
+        android:text="Nombre Apellido"
         android:textStyle="bold"
+        android:textSize="18sp"
         android:textColor="@color/dark_navy"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintStart_toEndOf="@+id/profile_image"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toEndOf="@id/profile_image"
+        app:layout_constraintTop_toTopOf="@id/profile_image"
+        app:layout_constraintEnd_toStartOf="@id/logOutButton" />
 
+    <!-- USUARIO -->
     <TextView
         android:id="@+id/user_occupation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:text="@string/tip_user"
-        android:textColor="@color/dark_navy"
-        android:justificationMode="inter_word"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        app:layout_constraintStart_toEndOf="@+id/profile_image"
-        app:layout_constraintTop_toBottomOf="@+id/user_name" />
+        android:text="usuario"
+        android:textSize="14sp"
+        android:textColor="@color/dark_teal"
+        app:layout_constraintStart_toEndOf="@id/profile_image"
+        app:layout_constraintTop_toBottomOf="@id/user_name"
+        app:layout_constraintEnd_toStartOf="@id/logOutButton" />
 
+    <!-- LIKES -->
+    <TextView
+        android:id="@+id/user_likes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="❤️ 0 likes"
+        android:textSize="13sp"
+        android:textColor="@color/dark_gray"
+        app:layout_constraintStart_toEndOf="@id/profile_image"
+        app:layout_constraintTop_toBottomOf="@id/user_occupation" />
+
+    <!-- BIO -->
     <TextView
         android:id="@+id/user_bio"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/bio"
+        android:layout_margin="16dp"
+        android:text="Biografía del usuario"
         android:maxLines="2"
         android:ellipsize="end"
-        android:justificationMode="inter_word"
+        android:textColor="@color/dark_teal"
         android:clickable="true"
         android:focusable="true"
-        android:minHeight="48dp"
-        android:padding="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/profile_image"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_image"
-        android:textColor="@color/dark_teal" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-
-
-
-
+    <!-- GALERÍA -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/gallery_grid"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/user_bio"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/user_bio"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:listitem="@layout/gallery_item" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
