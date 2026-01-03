@@ -1,8 +1,7 @@
 package com.ulpro.animalrecognizer
 
-import android.graphics.BitmapFactory
+import android.content.Intent
 import android.os.Bundle
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,45 +14,49 @@ import androidx.recyclerview.widget.RecyclerView
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
-import android.content.Intent
 
 class UsuariosFragment : Fragment() {
+
     private val sharedViewModel: SharedViewModel by activityViewModels()
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: UsersAdapterFragment
     private val userList: MutableList<User> = mutableListOf()
-    private val client = OkHttpClient() // Cliente reutilizable para cancelar solicitudes
+
+    private val client = OkHttpClient()
     private var currentPage = 1
     private val limit = 5
     private var totalPages = 1
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val view = inflater.inflate(R.layout.fragment_usuarios, container, false)
-        recyclerView = view.findViewById(R.id.rvUsers)
 
-        // Configurar el RecyclerView
+        recyclerView = view.findViewById(R.id.rvUsers)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = UsersAdapterFragment(userList)
         recyclerView.adapter = adapter
 
-        // Realizar la búsqueda
+        // 👉 CLICK EN USUARIO → ABRIR PERFIL
+        adapter.setOnItemClickListener { userId ->
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            intent.putExtra("open_profile_user_id", userId)
+            startActivity(intent)
+        }
+
         sharedViewModel.searchText.observe(viewLifecycleOwner) { searchText ->
-            client.dispatcher.cancelAll() // Cancela solicitudes en curso
+            client.dispatcher.cancelAll()
             userList.clear()
-            adapter.notifyDataSetChanged() // Limpia la lista antes de nuevas búsquedas
+            currentPage = 1
+            adapter.notifyDataSetChanged()
 
             if (searchText.isNotBlank()) {
                 fetchUsers(searchText)
             }
         }
-        adapter.setOnItemClickListener { userId ->
-            val intent = Intent(requireContext(), ProfileActivity::class.java)
-            intent.putExtra("usuario_id", userId)
-            startActivity(intent)
-        }
+
         return view
     }
 
@@ -61,72 +64,60 @@ class UsuariosFragment : Fragment() {
         val progressBar: ProgressBar = requireView().findViewById(R.id.loadingProgressBar)
         progressBar.visibility = View.VISIBLE
 
-        val url = "${ServerConfig.BASE_URL}get_users.php?busqueda=$query&pagina=$currentPage&limite=$limit"
+        val url =
+            "${ServerConfig.BASE_URL}get_users.php?busqueda=$query&pagina=$currentPage&limite=$limit"
+
         val request = Request.Builder().url(url).build()
 
         client.newCall(request).enqueue(object : Callback {
+
             override fun onFailure(call: Call, e: IOException) {
                 requireActivity().runOnUiThread {
                     progressBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Error al obtener los datos", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Error al obtener usuarios",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                response.body?.string()?.let { responseBody ->
-                    val jsonObject = JSONObject(responseBody)
-                    if (jsonObject.getBoolean("success")) {
-                        totalPages = jsonObject.getInt("total_paginas") // Actualiza el total de páginas
-                        val usuariosArray = jsonObject.getJSONArray("usuarios")
-                        requireActivity().runOnUiThread {
-                            for (i in 0 until usuariosArray.length()) {
-                                val userJson = usuariosArray.getJSONObject(i)
-                                val base64Image = userJson.optString("foto_perfil", "")
+                val body = response.body?.string() ?: return
+                val json = JSONObject(body)
 
-                                if (base64Image.isNotEmpty() && base64Image.contains("base64,")) {
-                                    try {
-                                        val base64Data = base64Image.substringAfter("base64,")
-                                        val imageBytes = Base64.decode(base64Data, Base64.DEFAULT)
-                                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                if (!json.getBoolean("success")) {
+                    requireActivity().runOnUiThread {
+                        progressBar.visibility = View.GONE
+                    }
+                    return
+                }
 
-                                        val user = User(
-                                            id = userJson.getString("id"), // Agrega el ID del usuario
-                                            name = userJson.getString("nombre"),
-                                            username = userJson.getString("nombre_usuario"),
-                                            imageBitmap = bitmap
-                                        )
-                                        userList.add(user)
-                                    } catch (e: IllegalArgumentException) {
-                                        e.printStackTrace()
-                                    }
-                                }
-                            }
-                            adapter.notifyDataSetChanged()
-                            progressBar.visibility = View.GONE
+                totalPages = json.getInt("total_paginas")
+                val usuarios = json.getJSONArray("usuarios")
 
-                            // Cargar la siguiente página si es necesario
-                            if (currentPage < totalPages) {
-                                currentPage++
-                                fetchUsers(query) // Llama recursivamente para cargar la siguiente página
-                            }
-                        }
-                    } else {
-                        requireActivity().runOnUiThread {
-                            progressBar.visibility = View.GONE
-                        }
+                requireActivity().runOnUiThread {
+                    for (i in 0 until usuarios.length()) {
+                        val u = usuarios.getJSONObject(i)
+                        userList.add(
+                            User(
+                                id = u.getString("id"),
+                                name = u.getString("nombre"),
+                                username = u.getString("nombre_usuario"),
+                                imageUrl = u.optString("foto_perfil")
+                            )
+                        )
+                    }
+
+                    adapter.notifyDataSetChanged()
+                    progressBar.visibility = View.GONE
+
+                    if (currentPage < totalPages) {
+                        currentPage++
+                        fetchUsers(query)
                     }
                 }
             }
         })
-    }
-
-    // Función de extensión para validar si una cadena es Base64
-    private fun String.isBase64(): Boolean {
-        return try {
-            Base64.decode(this, Base64.DEFAULT)
-            true
-        } catch (e: IllegalArgumentException) {
-            false
-        }
     }
 }
