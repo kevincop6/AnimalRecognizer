@@ -18,23 +18,29 @@ import java.io.IOException
 class UsuariosFragment : Fragment() {
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
+
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: UsersAdapterFragment
     private val userList: MutableList<User> = mutableListOf()
 
     private val client = OkHttpClient()
+
     private var currentPage = 1
-    private val limit = 5
-    private var totalPages = 1
+    private var isLoading = false
+    private var hayMas = true
+    private var currentQuery = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         val view = inflater.inflate(R.layout.fragment_usuarios, container, false)
 
         recyclerView = view.findViewById(R.id.rvUsers)
+        val progressBar: ProgressBar = view.findViewById(R.id.loadingProgressBar)
+
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = UsersAdapterFragment(userList)
         recyclerView.adapter = adapter
@@ -46,34 +52,84 @@ class UsuariosFragment : Fragment() {
             startActivity(intent)
         }
 
+        // 🔹 Scroll infinito controlado
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(rv, dx, dy)
+
+                if (dy <= 0) return
+                if (isLoading || !hayMas) return
+
+                val lm = rv.layoutManager as LinearLayoutManager
+                val visible = lm.childCount
+                val total = lm.itemCount
+                val firstVisible = lm.findFirstVisibleItemPosition()
+
+                if ((visible + firstVisible) >= total && firstVisible >= 0) {
+                    fetchUsers(currentQuery, progressBar)
+                }
+            }
+        })
+
+        // 🔹 Observa texto desde SearchActivity
         sharedViewModel.searchText.observe(viewLifecycleOwner) { searchText ->
+
+            val newQuery = searchText.trim()
+            if (newQuery == currentQuery) return@observe
+
             client.dispatcher.cancelAll()
+
             userList.clear()
-            currentPage = 1
             adapter.notifyDataSetChanged()
 
-            if (searchText.isNotBlank()) {
-                fetchUsers(searchText)
+            currentPage = 1
+            hayMas = true
+            currentQuery = newQuery
+
+            if (currentQuery.isNotEmpty()) {
+                fetchUsers(currentQuery, progressBar)
             }
         }
 
         return view
     }
 
-    private fun fetchUsers(query: String) {
-        val progressBar: ProgressBar = requireView().findViewById(R.id.loadingProgressBar)
+    // --------------------------------------------------------------------
+
+    private fun fetchUsers(query: String, progressBar: ProgressBar) {
+        if (isLoading || !hayMas || query.isBlank()) return
+
+        isLoading = true
         progressBar.visibility = View.VISIBLE
 
-        val url =
-            "${ServerConfig.BASE_URL}get_users.php?busqueda=$query&pagina=$currentPage&limite=$limit"
+        val token = TokenStore.getToken(requireContext())
+        if (token.isNullOrBlank()) {
+            progressBar.visibility = View.GONE
+            isLoading = false
+            Toast.makeText(requireContext(), "Sesión inválida", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        val request = Request.Builder().url(url).build()
+        val url = ServerConfig.BASE_URL.trimEnd('/') +
+                "/api/usuarios/search_users.php"
+
+        val body = FormBody.Builder()
+            .add("token", token)
+            .add("pagina", currentPage.toString())
+            .add("busqueda", query)
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .build()
 
         client.newCall(request).enqueue(object : Callback {
 
             override fun onFailure(call: Call, e: IOException) {
                 requireActivity().runOnUiThread {
                     progressBar.visibility = View.GONE
+                    isLoading = false
                     Toast.makeText(
                         requireContext(),
                         "Error al obtener usuarios",
@@ -83,39 +139,44 @@ class UsuariosFragment : Fragment() {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val body = response.body?.string() ?: return
-                val json = JSONObject(body)
+                val bodyStr = response.body?.string().orEmpty()
+                val json = JSONObject(bodyStr)
 
-                if (!json.getBoolean("success")) {
-                    requireActivity().runOnUiThread {
-                        progressBar.visibility = View.GONE
-                    }
-                    return
-                }
-
-                totalPages = json.getInt("total_paginas")
-                val usuarios = json.getJSONArray("usuarios")
+                val usuarios = json.optJSONArray("usuarios")
+                hayMas = json.optBoolean("hay_mas", false)
 
                 requireActivity().runOnUiThread {
+
+                    if (usuarios == null) {
+                        // Sin resultados o error controlado
+                        progressBar.visibility = View.GONE
+                        isLoading = false
+                        hayMas = false
+                        return@runOnUiThread
+                    }
+
                     for (i in 0 until usuarios.length()) {
                         val u = usuarios.getJSONObject(i)
+
                         userList.add(
                             User(
                                 id = u.getString("id"),
-                                name = u.getString("nombre"),
+                                name = u.getString("nombre_completo"),
                                 username = u.getString("nombre_usuario"),
-                                imageUrl = u.optString("foto_perfil")
+                                imageUrl = u.optString("foto_perfil"),
+                                likes = u.optInt("likes", 0)
                             )
                         )
                     }
 
                     adapter.notifyDataSetChanged()
-                    progressBar.visibility = View.GONE
 
-                    if (currentPage < totalPages) {
+                    if (hayMas) {
                         currentPage++
-                        fetchUsers(query)
                     }
+
+                    progressBar.visibility = View.GONE
+                    isLoading = false
                 }
             }
         })

@@ -22,6 +22,7 @@ class UsersAdapterFragment(
         val imageView: ImageView = view.findViewById(R.id.userImageView)
         val nameText: TextView = view.findViewById(R.id.userNameTextView)
         val usernameText: TextView = view.findViewById(R.id.userUsernameTextView)
+        val likesText: TextView = view.findViewById(R.id.userLikesTextView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -35,11 +36,13 @@ class UsersAdapterFragment(
 
         holder.nameText.text = user.name
         holder.usernameText.text = "@${user.username}"
+        holder.likesText.text = user.likes.toString()
 
         Glide.with(holder.itemView)
             .load(user.imageUrl)
             .placeholder(R.drawable.ic_default_profile)
             .error(R.drawable.ic_default_profile)
+            .circleCrop()
             .into(holder.imageView)
 
         holder.itemView.setOnClickListener {
