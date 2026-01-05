@@ -119,7 +119,7 @@ class UsuariosFragment : Fragment() {
         val body = FormBody.Builder()
             .add("token", token)
             .add("pagina", currentPage.toString())
-            .add("busqueda", currentQuery)
+            .add("buscar", currentQuery)
             .build()
 
         val request = Request.Builder()
