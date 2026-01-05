@@ -45,6 +45,7 @@ class UsuariosFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         val view = inflater.inflate(R.layout.fragment_usuarios, container, false)
 
         recyclerView = view.findViewById(R.id.rvUsers)
@@ -61,7 +62,7 @@ class UsuariosFragment : Fragment() {
             startActivity(intent)
         }
 
-        // Observa búsqueda
+        // Observa texto de búsqueda
         sharedViewModel.searchText.observe(viewLifecycleOwner) { text ->
             val query = text.trim()
 
@@ -99,6 +100,8 @@ class UsuariosFragment : Fragment() {
     }
 
     // ------------------------------------------------------------
+    // PETICIÓN AL API
+    // ------------------------------------------------------------
 
     private fun fetchUsers(progressBar: ProgressBar) {
         if (isLoading || !hayMas || currentQuery.isEmpty()) return
@@ -115,11 +118,11 @@ class UsuariosFragment : Fragment() {
         val url = ServerConfig.BASE_URL.trimEnd('/') +
                 "/api/usuarios/search_users.php"
 
-        // 🔑 POST clásico (igual que Apidog)
+        // ✅ POST clásico (application/x-www-form-urlencoded)
         val body = FormBody.Builder()
             .add("token", token)
             .add("pagina", currentPage.toString())
-            .add("buscar", currentQuery)
+            .add("buscar", currentQuery) // 🔑 CLAVE CORRECTA
             .build()
 
         val request = Request.Builder()
@@ -133,7 +136,11 @@ class UsuariosFragment : Fragment() {
                 requireActivity().runOnUiThread {
                     progressBar.visibility = View.GONE
                     isLoading = false
-                    Toast.makeText(requireContext(), "Error de red", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Error de red: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
@@ -149,16 +156,25 @@ class UsuariosFragment : Fragment() {
                     progressBar.visibility = View.GONE
                     isLoading = false
 
-                    if (!response.isSuccessful || responseBody.isNullOrBlank()) {
+                    // ❌ ERROR HTTP → leer JSON del backend
+                    if (!response.isSuccessful) {
+                        mostrarErrorDesdeJson(response.code, responseBody)
+                        hayMas = false
+                        return@runOnUiThread
+                    }
+
+                    // ❌ Respuesta vacía
+                    if (responseBody.isNullOrBlank()) {
                         Toast.makeText(
                             requireContext(),
-                            "Solicitud rechazada (${response.code})",
+                            "Respuesta vacía del servidor",
                             Toast.LENGTH_SHORT
                         ).show()
                         hayMas = false
                         return@runOnUiThread
                     }
 
+                    // ✅ Procesar respuesta correcta
                     try {
                         val json = JSONObject(responseBody)
 
@@ -191,15 +207,42 @@ class UsuariosFragment : Fragment() {
                         }
 
                     } catch (e: Exception) {
+                        hayMas = false
                         Toast.makeText(
                             requireContext(),
-                            "Error procesando respuesta",
+                            "Error procesando respuesta del servidor",
                             Toast.LENGTH_SHORT
                         ).show()
-                        hayMas = false
                     }
                 }
             }
         })
+    }
+
+    // ------------------------------------------------------------
+    // MANEJO DE ERRORES JSON DEL BACKEND
+    // ------------------------------------------------------------
+
+    private fun mostrarErrorDesdeJson(
+        responseCode: Int,
+        responseBody: String?
+    ) {
+        val mensaje = try {
+            if (!responseBody.isNullOrBlank()) {
+                val json = JSONObject(responseBody)
+                json.optString("error", "Error HTTP $responseCode")
+            } else {
+                "Error HTTP $responseCode"
+            }
+        } catch (e: Exception) {
+            "Error HTTP $responseCode"
+        }
+
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show()
+
+        // 🔐 Opcional: cerrar sesión si token inválido
+        if (responseCode == 401) {
+            TokenStore.clearToken(requireContext())
+        }
     }
 }
