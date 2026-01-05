@@ -158,15 +158,24 @@ class ProfileFragment : Fragment() {
 
     // --------------------------------------------------
     private fun logout() {
-        requireActivity()
-            .getSharedPreferences("userSession", Context.MODE_PRIVATE)
-            .edit()
-            .clear()
-            .apply()
 
-        startActivity(Intent(requireContext(), MainActivity::class.java))
-        requireActivity().finish()
+        val ctx = requireContext()
+
+        // 🔐 1. Borrar token cifrado (SESION REAL)
+        TokenStore.clearToken(ctx)
+
+        // 🧹 2. Limpiar datos asociados al usuario (paquete, etc.)
+        UserPrefs.clear(ctx)
+
+        // 🚪 3. Ir a pantalla de login limpiando el back stack
+        val intent = Intent(ctx, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        startActivity(intent)
     }
+
 
     private fun showError(title: String, msg: String) {
         requireActivity().runOnUiThread {
