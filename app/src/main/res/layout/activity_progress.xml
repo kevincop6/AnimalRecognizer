@@ -1,28 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/progressRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0e1621"
+    android:background="#1F2933"
     android:padding="24dp">
 
-    <!-- Logo or icon in the center -->
-<ImageView
-android:id="@+id/logoImageView"
-android:layout_width="150dp"
-android:layout_height="150dp"
-android:src="@mipmap/ic_launcher_round"
-android:layout_centerInParent="true"/>
+    <!-- HALO SUAVE (teal) detrás del logo -->
+    <View
+        android:id="@+id/haloView"
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:layout_centerInParent="true"
+        android:background="@drawable/bg_halo_teal"
+        android:alpha="0.0"/>
 
-    <!-- Circular ProgressBar -->
-<ProgressBar
-android:id="@+id/progressBar"
-style="@style/CustomProgressBar"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:layout_below="@id/logoImageView"
-android:layout_centerHorizontal="true"
-android:layout_marginTop="20dp"
-android:indeterminate="true"
-android:visibility="visible"
-android:indeterminateTint="#6cd8bc"/>
+    <!-- CONTENEDOR CENTRAL (se anima con fade + scale + pulse) -->
+    <LinearLayout
+        android:id="@+id/centerContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:alpha="0.0">
 
-    </RelativeLayout>
+        <!-- LOGO (GIF: logo_animado) -->
+        <ImageView
+            android:id="@+id/logoImageView"
+            android:layout_width="176dp"
+            android:layout_height="176dp"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter" />
+
+        <!-- TEXTO NEUTRAL (pantalla de redirección) -->
+        <TextView
+            android:id="@+id/loadingText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/iniciando"
+            android:textSize="14sp"
+            android:textColor="#B0BEC5"
+            android:letterSpacing="0.04"
+            android:fontFamily="sans-serif-medium" />
+
+        <!-- SPINNER PEQUEÑO (menta del logo) -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="16dp"
+            android:indeterminate="true"
+            android:indeterminateTint="#6CD8BC" />
+
+    </LinearLayout>
+
+</RelativeLayout>

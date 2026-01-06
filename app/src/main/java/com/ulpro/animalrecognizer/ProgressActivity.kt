@@ -6,7 +6,10 @@ import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -27,14 +30,31 @@ class ProgressActivity : AppCompatActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
 
-        // Cargar GIF
         val gifImageView: ImageView = findViewById(R.id.logoImageView)
+        val centerContainer: LinearLayout = findViewById(R.id.centerContainer)
+        val haloView: View = findViewById(R.id.haloView)
+
+        // 1) Cargar GIF (logo_animado)
         Glide.with(this)
             .asGif()
             .load(R.drawable.logo_animado)
             .into(gifImageView)
 
-        // Mantener animación mínimo 6s antes de decidir a dónde ir
+        // 2) Animación de entrada (fade + scale) del contenedor
+        val fadeScaleIn = AnimationUtils.loadAnimation(this, R.anim.fade_scale_in)
+        centerContainer.startAnimation(fadeScaleIn)
+        centerContainer.alpha = 1f
+
+        // 3) Pulso suave continuo (en el logo) - acompaña tus 6s sin “terminar”
+        val pulseSoft = AnimationUtils.loadAnimation(this, R.anim.pulse_soft)
+        gifImageView.startAnimation(pulseSoft)
+
+        // 4) Halo “respirando” detrás del logo (muy sutil)
+        val haloBreathe = AnimationUtils.loadAnimation(this, R.anim.halo_breathe)
+        haloView.startAnimation(haloBreathe)
+        haloView.alpha = 0.12f
+
+        // 5) Mantener animación mínimo 6s antes de decidir a dónde ir (TU LÓGICA)
         Handler(Looper.getMainLooper()).postDelayed({
             decideNextScreen()
         }, minAnimationMs)
@@ -60,25 +80,18 @@ class ProgressActivity : AppCompatActivity() {
         ServerConnection(this).verifySession(token) { result ->
             when (result) {
                 is VerifyResult.Active -> {
-                    // Guardar paquete_predeterminado si viene (si ya lo haces en otro lado, esto es opcional)
                     result.paquetePredeterminado?.let { UserPrefs.savePaquete(this, it) }
-
                     scheduleFetchAnimalsWorker()
                     redirectToAvistamientosActivity()
                 }
-
                 is VerifyResult.Inactive -> {
                     TokenStore.clearToken(this)
                     redirectToLoginActivity()
                 }
-
                 is VerifyResult.ServerError -> {
-                    // Hubo respuesta con error => NO permitir
                     redirectToLoginActivity()
                 }
-
                 is VerifyResult.NetworkError -> {
-                    // No se pudo conectar aunque hay red "teórica" => trátalo como sin conexión
                     scheduleFetchAnimalsWorker()
                     redirectToAvistamientosActivity()
                 }

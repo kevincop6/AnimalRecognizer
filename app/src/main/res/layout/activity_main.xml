@@ -1,171 +1,221 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    xmlns:tools="http://schemas.android.com/tools" android:background="@color/background">
 
+    <!-- IMAGEN TAPIR (limpia, sin texto encima) -->
     <ImageView
         android:id="@+id/AnimalLogo"
         android:layout_width="0dp"
-        android:layout_height="250dp"
+        android:layout_height="320dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/tapir"
+        android:src="@drawable/tapir_centroamericano_animado"
         android:contentDescription="@string/tapir"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <TextView
-        android:id="@+id/welcomeText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:fontFamily="sans-serif-light"
-        android:text="@string/corcovado_welcome"
-        android:textColor="@color/white"
-        android:textSize="28sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/AnimalLogo" />
+    <!-- Overlay suave para dar profundidad (no tapa el tapir) -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="320dp"
+        android:background="@drawable/overlay_gradient_soft"
+        app:layout_constraintTop_toTopOf="@id/AnimalLogo"
+        app:layout_constraintStart_toStartOf="@id/AnimalLogo"
+        app:layout_constraintEnd_toEndOf="@id/AnimalLogo"/>
 
-    <TextView
-        android:id="@+id/experienceText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:fontFamily="sans-serif-light"
-        android:text="@string/experimenta_lo_salvaje"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcomeText" />
+    <!-- OLA que "recorta" la imagen + línea primaria -->
+    <ImageView
+        android:id="@+id/waveCut"
+        android:layout_width="0dp"
+        android:layout_height="110dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/wave_cut_layer"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toBottomOf="@id/AnimalLogo"
+        app:layout_constraintStart_toStartOf="@id/AnimalLogo"
+        app:layout_constraintEnd_toEndOf="@id/AnimalLogo"/>
 
-    <TextView
-        android:id="@+id/signInText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:text="@string/inicio_sesi_n"
-        android:textColor="@color/black"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/experienceText" />
-
-    <LinearLayout
-        android:id="@+id/emailInputLayout"
+    <!-- CONTENEDOR (sube un poquito para meterse bajo la ola) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/loginCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:background="@drawable/rounded_edittext_background"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="-36dp"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="24dp"
+        app:cardUseCompatPadding="true"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/AnimalLogo"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/signInText">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="8dp"
-            android:src="@android:drawable/ic_search_category_default"
-            app:tint="@color/dark_gray"
-            android:contentDescription="@string/busqueda"/>
-
-        <EditText
-            android:id="@+id/emailEditText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="@android:color/transparent"
-            android:hint="@string/introduce_tu_correo_electr_nico"
-            android:inputType="textEmailAddress"
-            android:minHeight="48dp"
-            android:textSize="16sp"
-            android:autofillHints="Contraseña"/>
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:background="@color/background">
 
-    </LinearLayout>
+            <!-- TÍTULO / SUBTÍTULO (ya no van encima de la imagen) -->
+            <TextView
+                android:id="@+id/signInText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/inicio_sesi_n"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"/>
 
-    <LinearLayout
-        android:id="@+id/passwordInputLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:minHeight="48dp"
-        android:background="@drawable/rounded_edittext_background"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/emailInputLayout">
+            <TextView
+                android:id="@+id/subtitleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/identifica_especies_con_ia"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
 
-        <EditText
-            android:id="@+id/passwordEditText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:hint="@string/introduce_la_contrase_a"
-            android:inputType="textPassword"
-            android:minHeight="48dp"
-            android:autofillHints="Correo electrónico"
-            android:textSize="16sp" />
+            <!-- EMAIL -->
+            <LinearLayout
+                android:id="@+id/emailInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/rounded_edittext_background"
+                android:orientation="horizontal"
+                android:padding="14dp"
+                >
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="8dp"
-            android:src="@android:drawable/ic_menu_view"
-            android:contentDescription="@string/mostrar"
-            app:tint="@color/dark_gray" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_person_24dp"
+                    app:tint="@color/primary_dark"
+                    android:contentDescription="@string/busqueda"/>
 
-    </LinearLayout>
+                <EditText
+                    android:id="@+id/emailEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:background="@android:color/transparent"
+                    android:hint="@string/introduce_usuario"
+                    android:inputType="textEmailAddress"
+                    android:textSize="16sp"
+                    android:minHeight="48dp"
+                    android:autofillHints="username"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary"/>
+            </LinearLayout>
 
-    <Button
-        android:id="@+id/loginButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="16dp"
-        android:background="@color/black"
-        android:text="@string/iniciar_sesi_n"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/passwordInputLayout" />
+            <!-- PASSWORD -->
+            <LinearLayout
+                android:id="@+id/passwordInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/rounded_edittext_background"
+                android:orientation="horizontal"
+                android:padding="14dp">
 
-    <TextView
-        android:id="@+id/forgotPasswordText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/has_olvidado_tu_contrase_a"
-        android:textColor="@color/dark_gray"
-        android:textSize="14sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/loginButton" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@android:drawable/ic_lock_lock"
+                    app:tint="@color/primary_dark"
+                    android:contentDescription="@string/mostrar"/>
 
-    <TextView
-        android:id="@+id/signUpText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/no_tienes_una_cuenta_reg_strate"
-        android:textColor="@color/dark_gray"
-        android:textSize="14sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/forgotPasswordText" />
+                <EditText
+                    android:id="@+id/passwordEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:autofillHints="password"
+                    android:background="@android:color/transparent"
+                    android:hint="@string/introduce_la_contrase_a"
+                    android:inputType="textPassword"
+                    android:textSize="16sp"
+                    android:minHeight="48dp"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary"/>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@android:drawable/ic_menu_view"
+                    app:tint="@color/icon_high_contrast"
+                    android:contentDescription="@string/mostrar"/>
+            </LinearLayout>
+
+            <!-- ACCIONES -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+
+                <TextView
+                    android:id="@+id/forgotPasswordText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/has_olvidado_tu_contrase_a"
+                    android:textColor="@color/primary_dark"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- BOTÓN LOGIN (más "de marca") -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/loginButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginTop="18dp"
+                android:layout_gravity="center"
+                android:minWidth="220dp"
+                android:maxWidth="280dp"
+                android:paddingHorizontal="32dp"
+                android:text="@string/iniciar_sesi_n"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+
+                app:backgroundTint="@null"
+                app:backgroundTintMode="src_over"
+                app:rippleColor="@null"
+                app:strokeWidth="0dp"
+
+                android:background="@drawable/btn_primary"/>
+
+            <TextView
+                android:id="@+id/signUpText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="14dp"
+                android:text="@string/no_tienes_una_cuenta_reg_strate"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"/>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

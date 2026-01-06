@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Relleno (mismo color del fondo) para "recortar" la foto -->
+    <item android:drawable="@drawable/wave_fill"/>
+
+    <!-- Línea superior siguiendo la curva -->
+    <item android:drawable="@drawable/wave_stroke"/>
+</layer-list>
