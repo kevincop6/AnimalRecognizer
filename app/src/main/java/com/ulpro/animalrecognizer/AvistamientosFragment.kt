@@ -12,9 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.speech.tts.TextToSpeech
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -22,10 +20,14 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.bumptech.glide.Glide
+import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import org.tensorflow.lite.Interpreter
@@ -34,31 +36,34 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class AvistamientosFragment : Fragment() {
 
+    // ---------------------------
+    // UI
+    // ---------------------------
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: AnimalAdapter
+    private lateinit var selectedImageView: ImageView
+    private lateinit var recognitionMenuButton: MaterialButton
+
+    // ---------------------------
+    // Data
+    // ---------------------------
     private val allAnimals = mutableListOf<Animal>()
     private var currentPage = 1
     private val itemsPerPage = 8
     private var isLoading = false
     private var hasMoreItems = true
 
-    private lateinit var selectedImageView: ImageView
     private var lastBitmap: Bitmap? = null
     private lateinit var textToSpeech: TextToSpeech
 
-    private val serverUrl by lazy {
-        ServerConfig.initialize(requireContext())
-        ServerConfig.BASE_URL.trimEnd('/') + "/animal_detector.php"
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         return inflater.inflate(R.layout.fragment_avistamientos, container, false)
     }
 
@@ -67,24 +72,40 @@ class AvistamientosFragment : Fragment() {
 
         ServerConfig.initialize(requireContext())
 
+        // ---------------------------
+        // Views
+        // ---------------------------
         selectedImageView = view.findViewById(R.id.selectedImageView)
+        recognitionMenuButton = view.findViewById(R.id.recognitionMenuButton)
 
-        // Bienvenida (ya no guardas nombre -> dejamos genérico)
-        view.findViewById<TextView>(R.id.bienvenidoTextView).text = getString(R.string.bienvenido, "Usuario")
+        view.findViewById<TextView>(R.id.bienvenidoTextView).text =
+            getString(R.string.bienvenido, "Usuario")
 
-        // Permisos
+        // ---------------------------
+        // Permissions
+        // ---------------------------
         checkPermissions()
 
-        // TTS
+        // ---------------------------
+        // Text To Speech
+        // ---------------------------
         textToSpeech = TextToSpeech(requireContext()) { status ->
             if (status != TextToSpeech.SUCCESS) {
-                Toast.makeText(requireContext(), "Error al inicializar TextToSpeech", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Error al inicializar TextToSpeech",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
+        // ---------------------------
         // RecyclerView
+        // ---------------------------
         recyclerView = view.findViewById(R.id.recyclerView_animals)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
         adapter = AnimalAdapter(mutableListOf())
         recyclerView.adapter = adapter
 
@@ -97,30 +118,23 @@ class AvistamientosFragment : Fragment() {
             }
         })
 
-        // Botones
-        view.findViewById<Button>(R.id.selectImageButton).setOnClickListener {
-            if (hasGalleryPermission()) openGallery() else requestGalleryPermission()
+        // ---------------------------
+        // Dropdown button
+        // ---------------------------
+        recognitionMenuButton.setOnClickListener {
+            showRecognitionMenu(it)
         }
 
-        view.findViewById<Button>(R.id.retryButton).setOnClickListener {
-            lastBitmap?.let { classifyImageLocally(it) }
-                ?: Toast.makeText(requireContext(), "No hay imagen para reintentar", Toast.LENGTH_SHORT).show()
-        }
-
-        view.findViewById<Button>(R.id.camaraButton).setOnClickListener {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                takePictureLauncher.launch(null)
-            } else {
-                ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.CAMERA), 100)
-            }
-        }
-
-        // Search abre otra Activity
+        // ---------------------------
+        // Search
+        // ---------------------------
         view.findViewById<EditText>(R.id.searchView_avistamientos).setOnClickListener {
             startActivity(Intent(requireContext(), SearchActivity::class.java))
         }
 
-        // Cargar animales desde el archivo activo (y observar worker si quieres)
+        // ---------------------------
+        // Load animals
+        // ---------------------------
         loadAnimalsBasedOnWorkerState()
     }
 
@@ -137,32 +151,106 @@ class AvistamientosFragment : Fragment() {
         }
     }
 
-    // ---------------------------
-    // Permisos
-    // ---------------------------
+    // ======================================================
+    // BITMAP FIX (GALERÍA -> HARDWARE BITMAP)
+    // ======================================================
+    private fun ensureSoftwareBitmap(bitmap: Bitmap): Bitmap {
+        return if (bitmap.config == Bitmap.Config.HARDWARE) {
+            bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        } else {
+            bitmap
+        }
+    }
+
+    // ======================================================
+    // DROPDOWN MENU
+    // ======================================================
+    private fun showRecognitionMenu(anchor: View) {
+        val popup = PopupMenu(requireContext(), anchor)
+        popup.menuInflater.inflate(R.menu.menu_recognition, popup.menu)
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+
+                R.id.action_gallery -> {
+                    if (hasGalleryPermission()) openGallery()
+                    else requestGalleryPermission()
+                    true
+                }
+
+                R.id.action_camera -> {
+                    if (ContextCompat.checkSelfPermission(
+                            requireContext(),
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        takePictureLauncher.launch(null)
+                    } else {
+                        ActivityCompat.requestPermissions(
+                            requireActivity(),
+                            arrayOf(Manifest.permission.CAMERA),
+                            100
+                        )
+                    }
+                    true
+                }
+
+                R.id.action_retry -> {
+                    lastBitmap?.let {
+                        // Asegurar bitmap "software" incluso al reintentar
+                        val safe = ensureSoftwareBitmap(it)
+                        classifyImageLocally(safe)
+                    } ?: Toast.makeText(
+                        requireContext(),
+                        "No hay imagen para reintentar",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        popup.show()
+    }
+
+    // ======================================================
+    // PERMISSIONS
+    // ======================================================
     private fun hasGalleryPermission(): Boolean {
-        val perm = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
-        else Manifest.permission.READ_EXTERNAL_STORAGE
-        return ContextCompat.checkSelfPermission(requireContext(), perm) == PackageManager.PERMISSION_GRANTED
+        val perm =
+            if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
+            else Manifest.permission.READ_EXTERNAL_STORAGE
+
+        return ContextCompat.checkSelfPermission(requireContext(), perm) ==
+                PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestGalleryPermission() {
-        val perm = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
-        else Manifest.permission.READ_EXTERNAL_STORAGE
+        val perm =
+            if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
+            else Manifest.permission.READ_EXTERNAL_STORAGE
+
         ActivityCompat.requestPermissions(requireActivity(), arrayOf(perm), 101)
     }
 
     private fun checkPermissions() {
         val needed = mutableListOf<String>()
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             needed.add(Manifest.permission.CAMERA)
         }
 
-        val galleryPerm = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
-        else Manifest.permission.READ_EXTERNAL_STORAGE
+        val galleryPerm =
+            if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
+            else Manifest.permission.READ_EXTERNAL_STORAGE
 
-        if (ContextCompat.checkSelfPermission(requireContext(), galleryPerm) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(requireContext(), galleryPerm)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             needed.add(galleryPerm)
         }
 
@@ -171,27 +259,35 @@ class AvistamientosFragment : Fragment() {
         }
     }
 
-    // ---------------------------
-    // Gallery / Camera
-    // ---------------------------
+    // ======================================================
+    // GALLERY / CAMERA
+    // ======================================================
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-            if (bitmap != null) {
-                selectedImageView.setImageBitmap(bitmap)
-                classifyImageLocally(bitmap)
-            } else {
-                Toast.makeText(requireContext(), "No se capturó ninguna imagen", Toast.LENGTH_SHORT).show()
-            }
+            bitmap?.let {
+                val safeBitmap = ensureSoftwareBitmap(it)
+                selectedImageView.setImageBitmap(safeBitmap)
+                classifyImageLocally(safeBitmap)
+            } ?: Toast.makeText(
+                requireContext(),
+                "No se capturó ninguna imagen",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK && result.data?.data != null) {
-                val imageUri: Uri = result.data!!.data!!
-                val source = ImageDecoder.createSource(requireActivity().contentResolver, imageUri)
-                val bitmap = ImageDecoder.decodeBitmap(source)
-                selectedImageView.setImageBitmap(bitmap)
-                classifyImageLocally(bitmap)
+                val uri: Uri = result.data!!.data!!
+
+                val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
+
+                // IMPORTANTE: ImageDecoder puede devolver HARDWARE bitmap
+                val rawBitmap = ImageDecoder.decodeBitmap(source)
+                val safeBitmap = ensureSoftwareBitmap(rawBitmap)
+
+                selectedImageView.setImageBitmap(safeBitmap)
+                classifyImageLocally(safeBitmap)
             }
         }
 
@@ -200,61 +296,40 @@ class AvistamientosFragment : Fragment() {
         pickImageLauncher.launch(intent)
     }
 
-    // ---------------------------
-    // Animales: cargar desde archivo activo
-    // ---------------------------
+    // ======================================================
+    // ANIMALS LOADING (WORKER / CACHE)
+    // ======================================================
     private fun loadAnimalsBasedOnWorkerState() {
-        // Si sigues usando un uniqueWorkName, ajusta el nombre aquí.
-        // Si no quieres observar worker, puedes llamar directo a loadAnimalsFromActiveFile().
         val wm = WorkManager.getInstance(requireContext())
-
         wm.getWorkInfosForUniqueWorkLiveData("fetch_animals_weekly")
-            .observe(viewLifecycleOwner) { workInfos ->
-                val state = workInfos.firstOrNull()?.state
-                when (state) {
-                    WorkInfo.State.RUNNING, WorkInfo.State.ENQUEUED -> loadAnimalsFromActiveFile()
-                    WorkInfo.State.FAILED -> {
-                        Toast.makeText(requireContext(), "Error al actualizar los animales", Toast.LENGTH_SHORT).show()
-                        loadAnimalsFromActiveFile()
-                    }
-                    else -> loadAnimalsFromActiveFile()
-                }
+            .observe(viewLifecycleOwner) {
+                loadAnimalsFromActiveFile()
             }
     }
 
     private fun loadAnimalsFromActiveFile() {
         val file = getActiveAnimalsFile()
-        if (!file.exists()) {
-            Toast.makeText(requireContext(), "No hay animales descargados aún", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (!file.exists()) return
 
         try {
-            val jsonText = file.readText()
-            val arr = JSONArray(jsonText)
-
+            val arr = JSONArray(file.readText())
             allAnimals.clear()
-            adapter.clear() // asegúrate que tu adapter tenga clear(); si no, recrea adapter
+            adapter.clear()
 
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
                 val id = obj.optInt("id", -1)
                 val nombre = obj.optString("nombre", "")
                 val imagenUrl = obj.optString("imagen_url", "")
-
                 if (id != -1 && nombre.isNotBlank()) {
-                    // Ajusta esto a tu data class Animal real:
-                    // Si tu Animal es (id, name, imageBase64) cámbialo a (id, nombre, imagenUrl) en tu modelo.
                     allAnimals.add(Animal(id, nombre, imagenUrl))
                 }
             }
 
             currentPage = 1
             hasMoreItems = true
-            adapter.addAnimals(emptyList())
             loadNextPage()
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Error leyendo animales: ${e.message}", Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
         }
     }
 
@@ -272,8 +347,7 @@ class AvistamientosFragment : Fragment() {
         val end = minOf(start + itemsPerPage, allAnimals.size)
 
         if (start < allAnimals.size) {
-            val toLoad = allAnimals.subList(start, end)
-            adapter.addAnimals(toLoad)
+            adapter.addAnimals(allAnimals.subList(start, end))
             currentPage++
             if (end >= allAnimals.size) hasMoreItems = false
         }
@@ -281,13 +355,17 @@ class AvistamientosFragment : Fragment() {
         isLoading = false
     }
 
-    // ---------------------------
-    // Clasificación local (mantengo tu lógica base)
-    // ---------------------------
+    // ======================================================
+    // IMAGE CLASSIFICATION (TFLITE)
+    // ======================================================
     private fun classifyImageLocally(bitmap: Bitmap) {
-        lastBitmap = bitmap
+        val safeBitmap = ensureSoftwareBitmap(bitmap)
+        lastBitmap = safeBitmap
 
-        val loadingDialog = SweetAlertDialog(requireContext(), SweetAlertDialog.PROGRESS_TYPE).apply {
+        val loadingDialog = SweetAlertDialog(
+            requireContext(),
+            SweetAlertDialog.PROGRESS_TYPE
+        ).apply {
             titleText = "Analizando imagen..."
             setCancelable(false)
             show()
@@ -296,20 +374,20 @@ class AvistamientosFragment : Fragment() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val interpreter = loadModel()
-                val classMapping = loadClassMapping()
-                val input = preprocessImage(bitmap)
-                val (className, confidence) = predictImage(interpreter, input, classMapping)
+                val mapping = loadClassMapping()
+                val input = preprocessImage(safeBitmap)
+                val (name, confidence) = predictImage(interpreter, input, mapping)
 
                 withContext(Dispatchers.Main) {
                     loadingDialog.dismissWithAnimation()
-                    handlePredictionResult(className, confidence)
+                    handlePredictionResult(name, confidence)
                 }
 
                 interpreter.close()
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     loadingDialog.dismissWithAnimation()
-                    showErrorDialog("Error al clasificar: ${e.message ?: "Error desconocido"}")
+                    showErrorDialog("Error al clasificar: ${e.message}")
                 }
             }
         }
@@ -322,25 +400,13 @@ class AvistamientosFragment : Fragment() {
             return
         }
 
-        try {
-            val arr = JSONArray(file.readText())
-            val found = (0 until arr.length())
-                .asSequence()
-                .map { arr.getJSONObject(it) }
-                .firstOrNull { obj ->
-                    val nombre = obj.optString("nombre", "")
-                    // Match simple (puedes mejorar con normalización)
-                    nombre.equals(className, ignoreCase = true)
-                }
+        val arr = JSONArray(file.readText())
+        val found = (0 until arr.length())
+            .map { arr.getJSONObject(it) }
+            .firstOrNull { it.optString("nombre", "").equals(className, true) }
 
-            if (found != null) {
-                showAnimalFoundDialog(found, className, confidence)
-            } else {
-                showNotFoundDialog(className)
-            }
-        } catch (e: Exception) {
-            showErrorDialog("Error leyendo el caché: ${e.message}")
-        }
+        if (found != null) showAnimalFoundDialog(found, className, confidence)
+        else showNotFoundDialog(className)
     }
 
     private fun showAnimalFoundDialog(animalData: JSONObject, className: String, confidence: Float) {
@@ -350,32 +416,32 @@ class AvistamientosFragment : Fragment() {
 
         val confidencePct = confidence * 100f
 
-        val layout = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(16, 16, 16, 16)
-        }
-
         val imageView = ImageView(requireContext()).apply {
-            adjustViewBounds = true
             scaleType = ImageView.ScaleType.CENTER_CROP
             minimumHeight = 400
-        }
-
-        if (imagenUrl.isNotBlank()) {
-            Glide.with(this).load(imagenUrl).into(imageView)
+            if (imagenUrl.isNotBlank()) {
+                Glide.with(this).load(imagenUrl).into(this)
+            }
         }
 
         val textView = TextView(requireContext()).apply {
-            text = "Nombre: $nombre\nConfianza: ${"%.2f".format(confidencePct)}%"
+            text = "Nombre: $nombre\nConfianza: ${"%.1f".format(confidencePct)}%"
             textSize = 16f
-            setPadding(0, 16, 0, 0)
         }
 
-        layout.addView(imageView)
-        layout.addView(textView)
+        val layout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+            addView(imageView)
+            addView(textView)
+        }
 
-        val speakText = "Especie identificada: $nombre. Confianza ${"%.0f".format(confidencePct)} por ciento."
-        textToSpeech.speak(speakText, TextToSpeech.QUEUE_FLUSH, null, "animal_found")
+        textToSpeech.speak(
+            "Especie identificada: $nombre",
+            TextToSpeech.QUEUE_FLUSH,
+            null,
+            "animal_found"
+        )
 
         SweetAlertDialog(requireContext(), SweetAlertDialog.SUCCESS_TYPE).apply {
             titleText = "¡Especie identificada!"
@@ -383,10 +449,10 @@ class AvistamientosFragment : Fragment() {
             confirmText = "Ver detalles"
             setConfirmClickListener {
                 dismissWithAnimation()
-                Intent(requireContext(), details_animals::class.java).apply {
-                    putExtra("animalId", id)
-                    startActivity(this)
-                }
+                startActivity(
+                    Intent(requireContext(), details_animals::class.java)
+                        .putExtra("animalId", id)
+                )
             }
             show()
         }
@@ -394,8 +460,8 @@ class AvistamientosFragment : Fragment() {
 
     private fun showNotFoundDialog(name: String) {
         SweetAlertDialog(requireContext(), SweetAlertDialog.WARNING_TYPE).apply {
-            titleText = "Especie no registrada"
-            contentText = "La especie \"$name\" no está en los registros."
+            titleText = "No encontrado"
+            contentText = "La especie \"$name\" no está registrada."
             confirmText = "Cerrar"
             show()
         }
@@ -410,58 +476,67 @@ class AvistamientosFragment : Fragment() {
         }
     }
 
-    // ---------------------------
-    // TFLite helpers (igual que tu base)
-    // ---------------------------
+    // ======================================================
+    // TFLITE HELPERS
+    // ======================================================
     private fun loadModel(): Interpreter {
         val afd = requireContext().assets.openFd("model.tflite")
         val input = FileInputStream(afd.fileDescriptor)
-        val buffer = input.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
+        val buffer = input.channel.map(
+            FileChannel.MapMode.READ_ONLY,
+            afd.startOffset,
+            afd.declaredLength
+        )
         return Interpreter(buffer)
     }
 
     private fun loadClassMapping(): Map<String, String> {
-        val jsonString = requireContext().assets.open("classes.json").bufferedReader().use { it.readText() }
-        val jsonObject = JSONObject(jsonString)
-        val mapping = jsonObject.getJSONObject("class_mapping")
-        return mapping.keys().asSequence().associateWith { k -> mapping.getString(k) }
+        val json = requireContext().assets.open("classes.json")
+            .bufferedReader()
+            .use { it.readText() }
+
+        val obj = JSONObject(json).getJSONObject("class_mapping")
+        return obj.keys().asSequence().associateWith { obj.getString(it) }
     }
 
     private fun preprocessImage(bitmap: Bitmap): ByteBuffer {
-        val inputSize = 224
-        val resized = Bitmap.createScaledBitmap(
-            if (bitmap.config == Bitmap.Config.HARDWARE) bitmap.copy(Bitmap.Config.ARGB_8888, true) else bitmap,
-            inputSize, inputSize, true
-        )
+        val size = 224
 
-        val byteBuffer = ByteBuffer.allocateDirect(4 * inputSize * inputSize * 3).order(ByteOrder.nativeOrder())
-        val intValues = IntArray(inputSize * inputSize)
-        resized.getPixels(intValues, 0, inputSize, 0, 0, inputSize, inputSize)
+        // Por seguridad (si entra cualquier bitmap HARDWARE por otra ruta)
+        val safeBitmap = ensureSoftwareBitmap(bitmap)
 
-        for (pixel in intValues) {
-            val r = ((pixel shr 16) and 0xFF) / 255f
-            val g = ((pixel shr 8) and 0xFF) / 255f
-            val b = (pixel and 0xFF) / 255f
-            byteBuffer.putFloat(r * 2f - 1f)
-            byteBuffer.putFloat(g * 2f - 1f)
-            byteBuffer.putFloat(b * 2f - 1f)
+        val resized = Bitmap.createScaledBitmap(safeBitmap, size, size, true)
+
+        val buffer = ByteBuffer
+            .allocateDirect(4 * size * size * 3)
+            .order(ByteOrder.nativeOrder())
+
+        val pixels = IntArray(size * size)
+        resized.getPixels(pixels, 0, size, 0, 0, size, size)
+
+        for (px in pixels) {
+            buffer.putFloat(((px shr 16) and 0xFF) / 255f * 2f - 1f)
+            buffer.putFloat(((px shr 8) and 0xFF) / 255f * 2f - 1f)
+            buffer.putFloat((px and 0xFF) / 255f * 2f - 1f)
         }
 
-        return byteBuffer
+        buffer.rewind()
+        return buffer
     }
 
     private fun predictImage(
         interpreter: Interpreter,
-        inputBuffer: ByteBuffer,
-        classMapping: Map<String, String>
+        input: ByteBuffer,
+        mapping: Map<String, String>
     ): Pair<String, Float> {
-        val output = Array(1) { FloatArray(classMapping.size) }
-        interpreter.run(inputBuffer, output)
 
-        val preds = output[0]
-        val maxIndex = preds.indices.maxByOrNull { preds[it] } ?: 0
-        val confidence = preds[maxIndex]
-        val name = classMapping[maxIndex.toString()] ?: "Desconocido"
-        return name to confidence
+        val output = Array(1) { FloatArray(mapping.size) }
+        interpreter.run(input, output)
+
+        val idx = output[0].indices.maxByOrNull { output[0][it] } ?: 0
+        val name = mapping[idx.toString()] ?: "Desconocido"
+        val confidence = output[0][idx]
+
+        return Pair(name, confidence)
     }
 }

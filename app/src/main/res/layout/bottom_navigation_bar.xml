@@ -4,11 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="#F0F0F0"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:background="#FFFFFF"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
     <LinearLayout
+
         android:id="@+id/homeButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

@@ -1,200 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F7F7F7"
-    tools:context=".AvistamientosFragment">
+    android:background="#F5F7FA"
+    android:fillViewport="true">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
+        <!-- BIENVENIDA -->
+        <TextView
+            android:id="@+id/bienvenidoTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/bienvenido"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#1F2933"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- BUSCADOR -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:background="@drawable/bg_search_field"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#6B7280"
+                android:contentDescription="@string/busqueda"
+                android:layout_gravity="center_vertical"/>
+
+            <EditText
+                android:id="@+id/searchView_avistamientos"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/bienvenidoTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bienvenido"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="16dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/rounded_search_view_light_gray"
-                    android:orientation="horizontal"
-                    android:padding="8dp"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@android:drawable/ic_menu_search"
-                        app:tint="@android:color/darker_gray"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/busqueda"
-                        android:layout_marginEnd="8dp" />
-
-                    <EditText
-                        android:id="@+id/searchView_avistamientos"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="@string/buscar"
-                        android:background="@android:color/transparent"
-                        android:textSize="16sp"
-                        android:focusable="false"
-                        android:textColorHint="@android:color/darker_gray"
-                        android:clickable="true"
-                        android:textColor="@android:color/black"
-                        android:inputType="text"
-                        android:autofillHints="Busqueda"
-                        android:minHeight="48dp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/listado_animales"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="8dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView_animals"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:clipToPadding="false"
-                    android:paddingEnd="8dp"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/subir_imagen"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/rounded_card_background"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:id="@+id/selectedImageView"
-                        android:layout_width="match_parent"
-                        android:layout_height="180dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/perezoso_animado"
-                        android:contentDescription="@string/perezoso_animado" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/perezoso_animado"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:paddingTop="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/Generado_IA"
-                        android:textSize="16sp"
-                        android:textColor="@android:color/black"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/reconocer_animales"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginBottom="16dp">
-
-                    <Button
-                        android:id="@+id/selectImageButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/seleccionar_de_la_galer_a"
-                        style="?android:attr/buttonBarStyle"
-                        android:backgroundTint="@color/Old_Banani"
-                        android:textColor="@android:color/white"
-                        android:layout_marginEnd="8dp"
-                        android:gravity="center" />
-
-                    <Button
-                        android:id="@+id/camaraButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/tomar_una_foto"
-                        style="?android:attr/buttonBarStyle"
-                        android:backgroundTint="@color/Old_Banani"
-                        android:textColor="@android:color/white"
-                        android:layout_marginStart="8dp"
-                        android:gravity="center" />
-
-                    <Button
-                        android:id="@+id/retryButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/reintentar"
-                        style="?android:attr/buttonBarStyle"
-                        android:backgroundTint="@color/Old_Banani"
-                        android:textColor="@android:color/white"
-                        android:layout_marginStart="8dp"
-                        android:gravity="center" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:background="@android:color/transparent"
+                android:hint="@string/buscar"
+                android:focusable="false"
+                android:clickable="true"
+                android:textSize="16sp"
+                android:textColor="#1F2933"
+                android:textColorHint="#6B7280"
+                android:minHeight="48dp"/>
         </LinearLayout>
 
-    </ScrollView>
+        <!-- ANIMALES POPULARES -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/listado_animales"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#1F2933"
+            android:layout_marginBottom="8dp"/>
 
-</LinearLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView_animals"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingEnd="8dp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- BLOQUE RECONOCIMIENTO (REDISEÑADO) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reconocer_animales"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#1F2933"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/recognitionBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="16dp">
+
+            <!-- Imagen seleccionada -->
+            <ImageView
+                android:id="@+id/selectedImageView"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/perezoso_animado"
+                android:contentDescription="@string/perezoso_animado"/>
+
+            <!-- BOTÓN DROPDOWN -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/recognitionMenuButton"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="Reconocer animal"
+                android:textColor="@android:color/white"
+                app:backgroundTint="#6CD8BC"
+                app:icon="@drawable/ic_expand_more_24px"
+                app:iconGravity="textEnd"
+                app:cornerRadius="24dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
