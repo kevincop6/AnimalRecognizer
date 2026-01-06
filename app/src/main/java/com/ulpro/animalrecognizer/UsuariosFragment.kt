@@ -214,6 +214,9 @@ class UsuariosFragment : Fragment() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
+                    progressBar.visibility = View.GONE
+                    isLoading = false
                 }
             }
         })
