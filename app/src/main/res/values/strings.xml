@@ -60,6 +60,7 @@
     <string name="mostrar">mostrar</string>
     <string name="no_tienes_una_cuenta_reg_strate">¿No tienes una cuenta? Regístrate</string>
     <string name="has_olvidado_tu_contrase_a">¿Has olvidado tu contraseña?</string>
+    <string name="introduce_usuario">Introduce tu usuario</string>
     <string name="introduce_tu_correo_electr_nico">Introduce tu correo electrónico</string>
     <string name="introduce_la_contrase_a">Introduce la contraseña</string>
     <string name="experimenta_lo_salvaje">Experimenta lo salvaje</string>
@@ -179,4 +180,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="diga_algo">Diga algo...</string>
     <string name="reconocimiento_no_disponible">El reconocimiento de voz no está disponible en este dispositivo.</string>
+    <string name="identifica_especies_con_ia">Identifica especies con IA</string>
+    <string name="recordarme">Recordarme</string>
+    <string name="iniciando">Iniciando…</string>
 </resources>

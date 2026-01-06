@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- colors.xml -->
+    <color name="primary">#2EC4B6</color>        <!-- Verde menta logo -->
+    <color name="primary_dark">#1B7F79</color>   <!-- Verde profundo -->
+    <color name="accent">#A7EDE7</color>         <!-- Menta suave -->
+    <color name="background">#F6FFFD</color>     <!-- Blanco verdoso -->
+    <color name="text_primary">#1F2933</color>   <!-- Gris oscuro -->
+    <color name="text_secondary">#6B7280</color> <!-- Gris suave -->
+    <color name="icon_active">#1B7F79</color> <!-- teal oscuro del logo -->
+    <color name="icon_high_contrast">#1F2933</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="dark_blue_gray">#394750</color>
