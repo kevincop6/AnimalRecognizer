@@ -30,6 +30,7 @@
             android:id="@+id/logoImageView"
             android:layout_width="176dp"
             android:layout_height="176dp"
+            android:src="@drawable/logo_animado"
             android:contentDescription="@string/app_name"
             android:scaleType="fitCenter" />
 
