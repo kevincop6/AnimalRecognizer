@@ -1,6 +1,5 @@
 package com.ulpro.animalrecognizer
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Rect
 import android.os.Bundle
@@ -21,9 +20,13 @@ class ProfileActivity : AppCompatActivity() {
     private val client = OkHttpClient()
 
     private val items = mutableListOf<GalleryItem>()
+
     private var currentPage = 1
     private var totalPages = 1
     private var isLoading = false
+
+    // 🔑 ID del usuario cuyo perfil se va a visualizar
+    private var perfilUsuarioId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,70 +34,101 @@ class ProfileActivity : AppCompatActivity() {
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // --------------------------------------------------
+        // RECIBIR ID DE USUARIO
+        // --------------------------------------------------
+        perfilUsuarioId = intent.getStringExtra("open_profile_user_id")
+
+        if (perfilUsuarioId.isNullOrBlank()) {
+            showError("Error", "Usuario no válido")
+            finish()
+            return
+        }
+
         setupRecyclerView()
         loadProfile(1)
-
-        // 🔐 CERRAR SESIÓN (SOLO SI EXISTE EN EL XML)
-        binding.logOutButton.setOnClickListener {
-            cerrarSesion()
-        }
     }
 
     // --------------------------------------------------
-    // CERRAR SESIÓN (Activity)
-    // --------------------------------------------------
-    private fun cerrarSesion() {
-        getSharedPreferences("userSession", Context.MODE_PRIVATE)
-            .edit()
-            .clear()
-            .apply()
-
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-
+    // PETICIÓN AL API
     // --------------------------------------------------
     private fun loadProfile(page: Int) {
-        val token = TokenStore.getToken(this) ?: return
+
+        if (isLoading) return
+
+        val token = TokenStore.getToken(this)
+        if (token.isNullOrBlank()) {
+            showError("Error", "Token no disponible")
+            return
+        }
+
+        isLoading = true
 
         val url = ServerConfig.BASE_URL.trimEnd('/') +
                 "/api/usuarios/profile_view.php"
 
         val body = FormBody.Builder()
-            .add("token", token)
-            .add("pagina", page.toString())
+            .add("token", token)                // 🔐 seguridad
+            .add("pagina", page.toString())     // 📄 paginación
+            .add("usuario_id", perfilUsuarioId!!) // 👤 perfil
             .build()
 
-        client.newCall(
-            Request.Builder().url(url).post(body).build()
-        ).enqueue(object : Callback {
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
 
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread {
-                    showError("Error", e.message ?: "Error de red")
+                    isLoading = false
+                    showError("Error de red", e.message ?: "No se pudo conectar")
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val json = JSONObject(response.body?.string() ?: return)
-                runOnUiThread { renderProfile(json) }
+                val bodyStr = response.body?.string()
+
+                runOnUiThread {
+                    isLoading = false
+
+                    if (!response.isSuccessful || bodyStr.isNullOrBlank()) {
+                        showError(
+                            "Error",
+                            "Error del servidor (${response.code})"
+                        )
+                        return@runOnUiThread
+                    }
+
+                    try {
+                        val json = JSONObject(bodyStr)
+                        renderProfile(json)
+                    } catch (e: Exception) {
+                        showError("Error", "Respuesta inválida del servidor")
+                    }
+                }
             }
         })
     }
 
+    // --------------------------------------------------
+    // RENDER PERFIL
+    // --------------------------------------------------
     private fun renderProfile(json: JSONObject) {
+
         val perfil = json.getJSONObject("perfil")
 
         binding.userName.text = perfil.optString("nombre")
         binding.userOccupation.text = "@${perfil.optString("usuario")}"
-        binding.userLikes.text = "❤️ ${perfil.optInt("likes")} likes"
+        binding.userLikes.text = "❤️ ${perfil.optInt("likes", 0)} likes"
 
         val bio = perfil.optString("bio").trim()
         binding.userBio.text =
-            if (bio.isNotEmpty()) bio
-            else "Este usuario aún no ha agregado una biografía."
+            if (bio.isNotEmpty())
+                bio
+            else
+                "Este usuario aún no ha agregado una biografía."
 
         Glide.with(this)
             .load(perfil.optString("foto_perfil"))
@@ -102,29 +136,43 @@ class ProfileActivity : AppCompatActivity() {
             .error(R.drawable.ic_default_profile)
             .into(binding.profileImage)
 
-        val publicaciones = json.getJSONArray("publicaciones")
+        // --------------------------------------------------
+        // PUBLICACIONES
+        // --------------------------------------------------
+        val publicaciones = json.optJSONArray("publicaciones")
         items.clear()
 
-        for (i in 0 until publicaciones.length()) {
-            val p = publicaciones.getJSONObject(i)
-            items.add(
-                GalleryItem(
-                    id = p.getInt("id"),
-                    titulo = p.getString("titulo"),
-                    imageUrl = p.getString("imagen"),
-                    descripcion = p.getString("descripcion")
+        if (publicaciones != null) {
+            for (i in 0 until publicaciones.length()) {
+                val p = publicaciones.getJSONObject(i)
+                items.add(
+                    GalleryItem(
+                        id = p.getInt("id"),
+                        titulo = p.getString("titulo"),
+                        imageUrl = p.getString("imagen"),
+                        descripcion = p.getString("descripcion")
+                    )
                 )
-            )
+            }
         }
 
         binding.galleryGrid.adapter?.notifyDataSetChanged()
 
-        val pag = json.getJSONObject("paginacion")
-        currentPage = pag.getInt("pagina_actual")
-        totalPages = pag.getInt("total_paginas")
+        // --------------------------------------------------
+        // PAGINACIÓN
+        // --------------------------------------------------
+        val pag = json.optJSONObject("paginacion")
+        if (pag != null) {
+            currentPage = pag.optInt("pagina_actual", 1)
+            totalPages = pag.optInt("total_paginas", 1)
+        }
     }
 
+    // --------------------------------------------------
+    // RECYCLER VIEW
+    // --------------------------------------------------
     private fun setupRecyclerView() {
+
         val rv = binding.galleryGrid
         rv.layoutManager = GridLayoutManager(this, 3)
 
@@ -147,10 +195,14 @@ class ProfileActivity : AppCompatActivity() {
         })
     }
 
+    // --------------------------------------------------
+    // ERROR UI
+    // --------------------------------------------------
     private fun showError(title: String, msg: String) {
         SweetAlertDialog(this, SweetAlertDialog.ERROR_TYPE)
             .setTitleText(title)
             .setContentText(msg)
+            .setConfirmText("Cerrar")
             .show()
     }
 }
