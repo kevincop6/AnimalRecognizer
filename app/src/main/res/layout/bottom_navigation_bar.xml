@@ -4,25 +4,26 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="#FFFFFF"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
+    android:background="@drawable/bg_bottom_nav"
+    android:paddingTop="10dp"
+    android:paddingBottom="12dp">
 
     <LinearLayout
-
         android:id="@+id/homeButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
         <ImageView
             android:id="@+id/homeIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_home_black_24dp"
-            app:tint="@color/dark_gray"
+            app:tint="@color/text_secondary"
             android:contentDescription="@string/Inicio" />
 
         <TextView
@@ -31,7 +32,7 @@
             android:layout_height="wrap_content"
             android:text="@string/Inicio"
             android:textSize="12sp"
-            android:textColor="@color/dark_gray" />
+            android:textColor="@color/text_secondary" />
 
     </LinearLayout>
 
@@ -41,14 +42,16 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
         <ImageView
             android:id="@+id/galleryIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_photo_library_black_24dp"
-            app:tint="@color/dark_gray"
+            app:tint="@color/text_secondary"
             android:contentDescription="@string/Galeria" />
 
         <TextView
@@ -57,7 +60,7 @@
             android:layout_height="wrap_content"
             android:text="@string/Galeria"
             android:textSize="12sp"
-            android:textColor="@color/dark_gray" />
+            android:textColor="@color/text_secondary" />
 
     </LinearLayout>
 
@@ -67,14 +70,16 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
         <ImageView
             android:id="@+id/profileIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_person_black_24dp"
-            app:tint="@color/dark_gray"
+            app:tint="@color/text_secondary"
             android:contentDescription="@string/Perfil" />
 
         <TextView
@@ -83,24 +88,27 @@
             android:layout_height="wrap_content"
             android:text="@string/Perfil"
             android:textSize="12sp"
-            android:textColor="@color/dark_gray" />
+            android:textColor="@color/text_secondary" />
 
     </LinearLayout>
+
     <LinearLayout
         android:id="@+id/SettingsButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
         <ImageView
             android:id="@+id/SettingsIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_settings_black_24dp"
-            app:tint="@color/dark_gray"
-            android:contentDescription="@string/Perfil" />
+            app:tint="@color/text_secondary"
+            android:contentDescription="@string/Configuracion" />
 
         <TextView
             android:id="@+id/Settingsext"
@@ -108,7 +116,8 @@
             android:layout_height="wrap_content"
             android:text="@string/Configuracion"
             android:textSize="12sp"
-            android:textColor="@color/dark_gray" />
+            android:textColor="@color/text_secondary" />
 
     </LinearLayout>
+
 </LinearLayout>

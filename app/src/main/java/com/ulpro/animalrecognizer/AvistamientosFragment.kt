@@ -117,7 +117,28 @@ class AvistamientosFragment : Fragment() {
                 }
             }
         })
+// ✅ ANIMACIÓN DEL BOTÓN
+        recognitionMenuButton.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.animate()
+                        .scaleX(0.96f)
+                        .scaleY(0.96f)
+                        .setDuration(120)
+                        .start()
+                }
 
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(120)
+                        .start()
+                }
+            }
+            false // importante para que el click siga funcionando
+        }
         // ---------------------------
         // Dropdown button
         // ---------------------------
