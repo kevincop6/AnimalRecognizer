@@ -183,4 +183,12 @@
     <string name="identifica_especies_con_ia">Identifica especies con IA</string>
     <string name="recordarme">Recordarme</string>
     <string name="iniciando">Iniciando…</string>
+    <string name="_0">0</string>
+    <string name="me_gusta">Me gusta</string>
+    <string name="seguidores">Seguidores</string>
+    <string name="publicaciones">Publicaciones</string>
+    <string name="editar">Editar</string>
+    <string name="foto_perfil">Foto Perfil</string>
+    <string name="comentarios">comentarios</string>
+    <string name="vistas">vistas</string>
 </resources>

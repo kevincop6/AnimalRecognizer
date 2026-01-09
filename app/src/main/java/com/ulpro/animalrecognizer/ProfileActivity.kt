@@ -25,7 +25,7 @@ class ProfileActivity : AppCompatActivity() {
     private var totalPages = 1
     private var isLoading = false
 
-    // 🔑 ID del usuario cuyo perfil se va a visualizar
+    // 👤 ID del usuario a visualizar
     private var perfilUsuarioId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,9 +68,9 @@ class ProfileActivity : AppCompatActivity() {
                 "/api/usuarios/profile_view.php"
 
         val body = FormBody.Builder()
-            .add("token", token)                // 🔐 seguridad
-            .add("pagina", page.toString())     // 📄 paginación
-            .add("usuario_id", perfilUsuarioId!!) // 👤 perfil
+            .add("token", token)
+            .add("pagina", page.toString())
+            .add("usuario_id", perfilUsuarioId!!)
             .build()
 
         val request = Request.Builder()
@@ -113,15 +113,15 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     // --------------------------------------------------
-    // RENDER PERFIL
+    // RENDER PERFIL + CONTADORES
     // --------------------------------------------------
     private fun renderProfile(json: JSONObject) {
 
         val perfil = json.getJSONObject("perfil")
 
-        binding.userName.text = perfil.optString("nombre")
-        binding.userOccupation.text = "@${perfil.optString("usuario")}"
-        binding.userLikes.text = "❤️ ${perfil.optInt("likes", 0)} likes"
+        // ---------- DATOS PRINCIPALES ----------
+        binding.userName.text = "@${perfil.optString("usuario")}"
+        binding.userOccupation.text = perfil.optString("nombre")
 
         val bio = perfil.optString("bio").trim()
         binding.userBio.text =
@@ -136,9 +136,18 @@ class ProfileActivity : AppCompatActivity() {
             .error(R.drawable.ic_default_profile)
             .into(binding.profileImage)
 
-        // --------------------------------------------------
-        // PUBLICACIONES
-        // --------------------------------------------------
+        // ---------- CONTADORES ----------
+        binding.userLikes.text =
+            perfil.optInt("likes", 0).toString()
+
+        binding.statFollowers.text =
+            perfil.optInt("seguidores", 0).toString()
+
+        val paginacion = json.optJSONObject("paginacion")
+        binding.statPosts.text =
+            paginacion?.optInt("total_publicaciones", 0)?.toString() ?: "0"
+
+        // ---------- PUBLICACIONES ----------
         val publicaciones = json.optJSONArray("publicaciones")
         items.clear()
 
@@ -158,13 +167,10 @@ class ProfileActivity : AppCompatActivity() {
 
         binding.galleryGrid.adapter?.notifyDataSetChanged()
 
-        // --------------------------------------------------
-        // PAGINACIÓN
-        // --------------------------------------------------
-        val pag = json.optJSONObject("paginacion")
-        if (pag != null) {
-            currentPage = pag.optInt("pagina_actual", 1)
-            totalPages = pag.optInt("total_paginas", 1)
+        // ---------- PAGINACIÓN ----------
+        if (paginacion != null) {
+            currentPage = paginacion.optInt("pagina_actual", 1)
+            totalPages = paginacion.optInt("total_paginas", 1)
         }
     }
 
@@ -177,9 +183,11 @@ class ProfileActivity : AppCompatActivity() {
         rv.layoutManager = GridLayoutManager(this, 3)
 
         rv.adapter = GalleryAdapter(items) { item ->
-            ImageDataStore.imageList = items
-            val intent = Intent(this, FullScreenImageActivity::class.java)
-            intent.putExtra("currentPosition", items.indexOf(item))
+
+            val intent = Intent(this, FullScreenImageActivity::class.java).apply {
+                putExtra("avistamiento_id", item.id) // 👈 el ID del post
+            }
+
             startActivity(intent)
         }
 

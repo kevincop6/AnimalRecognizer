@@ -41,21 +41,14 @@ class ProfileFragment : Fragment() {
         setupRecyclerView()
         loadProfile(1)
 
-        binding.profileImage.setOnClickListener {
-            // abrir imagen de perfil en fullscreen (URL)
-            val intent = Intent(requireContext(), FullScreenImageActivity::class.java)
-            intent.putExtra("currentPosition", 0)
-            ImageDataStore.imageList = emptyList() // solo imagen individual
-            startActivity(intent)
-        }
-
+        // Logout
         binding.logOutButton.setOnClickListener {
             logout()
         }
     }
 
     // --------------------------------------------------
-    // API PERFIL (MISMO ENDPOINT QUE ProfileActivity)
+    // API PERFIL
     // --------------------------------------------------
     private fun loadProfile(page: Int) {
         val token = TokenStore.getToken(requireContext())
@@ -93,9 +86,11 @@ class ProfileFragment : Fragment() {
 
         val perfil = json.getJSONObject("perfil")
 
-        binding.userName.text = perfil.optString("nombre")
-        binding.userOccupation.text = "@${perfil.optString("usuario")}"
-        binding.userLikes.text = "❤️ ${perfil.optInt("likes")} likes"
+        // ---------- DATOS DEL PERFIL ----------
+        binding.userName.text = "@${perfil.optString("usuario")}"
+        binding.userOccupation.text = perfil.optString("nombre")
+        binding.userLikes.text = perfil.optInt("likes", 0).toString()
+        binding.statFollowers.text = perfil.optInt("seguidores", 0).toString()
 
         val bio = perfil.optString("bio").trim()
         binding.userBio.text =
@@ -126,9 +121,14 @@ class ProfileFragment : Fragment() {
 
         binding.galleryGrid.adapter?.notifyDataSetChanged()
 
-        val pag = json.getJSONObject("paginacion")
-        currentPage = pag.getInt("pagina_actual")
-        totalPages = pag.getInt("total_paginas")
+        // ---------- CONTADOR DE POSTS ----------
+        val paginacion = json.getJSONObject("paginacion")
+        binding.statPosts.text =
+            paginacion.optInt("total_publicaciones", 0).toString()
+
+        // ---------- PAGINACIÓN ----------
+        currentPage = paginacion.getInt("pagina_actual")
+        totalPages = paginacion.getInt("total_paginas")
     }
 
     // --------------------------------------------------
@@ -138,9 +138,14 @@ class ProfileFragment : Fragment() {
         binding.galleryGrid.layoutManager = GridLayoutManager(requireContext(), 3)
 
         binding.galleryGrid.adapter = GalleryAdapter(items) { item ->
-            ImageDataStore.imageList = items
-            val intent = Intent(requireContext(), FullScreenImageActivity::class.java)
-            intent.putExtra("currentPosition", items.indexOf(item))
+
+            val intent = Intent(
+                requireContext(),
+                FullScreenImageActivity::class.java
+            ).apply {
+                putExtra("avistamiento_id", item.id) // 👈 ID del post
+            }
+
             startActivity(intent)
         }
 
@@ -158,24 +163,17 @@ class ProfileFragment : Fragment() {
 
     // --------------------------------------------------
     private fun logout() {
-
         val ctx = requireContext()
 
-        // 🔐 1. Borrar token cifrado (SESION REAL)
         TokenStore.clearToken(ctx)
-
-        // 🧹 2. Limpiar datos asociados al usuario (paquete, etc.)
         UserPrefs.clear(ctx)
 
-        // 🚪 3. Ir a pantalla de login limpiando el back stack
         val intent = Intent(ctx, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-
         startActivity(intent)
     }
-
 
     private fun showError(title: String, msg: String) {
         requireActivity().runOnUiThread {
@@ -186,3 +184,4 @@ class ProfileFragment : Fragment() {
         }
     }
 }
+
