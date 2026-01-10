@@ -6,23 +6,23 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <!-- FOTO PERFIL (CENTRADA, MISMO ESTILO QUE FRAGMENT) -->
+    <!-- FOTO PERFIL -->
     <ImageView
         android:id="@+id/profile_image"
         android:layout_width="92dp"
         android:layout_height="92dp"
         android:layout_marginTop="24dp"
-        android:contentDescription="@string/foto_perfil"
         android:background="@drawable/circular_image"
         android:clipToOutline="true"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_default_profile"
         android:foreground="@drawable/profile_image_overlay"
+        android:contentDescription="@string/foto_perfil"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- USUARIO (@usuario) -->
+    <!-- USUARIO -->
     <TextView
         android:id="@+id/user_name"
         android:layout_width="wrap_content"
@@ -47,6 +47,41 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- BOTÓN SEGUIR / SIGUIENDO -->
+    <LinearLayout
+        android:id="@+id/follow_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="6dp"
+        android:background="@drawable/rounded_follow_bg"
+        app:layout_constraintTop_toBottomOf="@id/user_occupation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageButton
+            android:id="@+id/btn_follow"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_follow_add_24dp"
+            app:tint="@color/primary_dark"
+            android:contentDescription="@string/seguir" />
+
+        <TextView
+            android:id="@+id/txt_follow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="Seguir"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_dark" />
+    </LinearLayout>
+
     <!-- BIO -->
     <TextView
         android:id="@+id/user_bio"
@@ -60,11 +95,11 @@
         android:gravity="center"
         android:textSize="13sp"
         android:textColor="@color/text_secondary"
-        app:layout_constraintTop_toBottomOf="@id/user_occupation"
+        app:layout_constraintTop_toBottomOf="@id/follow_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- CONTADORES (SOLO VISUAL, SIN ACCIONES) -->
+    <!-- CONTADORES -->
     <LinearLayout
         android:id="@+id/stats_container"
         android:layout_width="0dp"
@@ -86,19 +121,19 @@
 
             <TextView
                 android:id="@+id/stat_posts"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="0"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/primary_dark" />
+                android:textColor="@color/primary_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="@string/publicaciones"
                 android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
+                android:textColor="@color/text_secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <!-- SEGUIDORES -->
@@ -111,19 +146,19 @@
 
             <TextView
                 android:id="@+id/stat_followers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="0"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/primary_dark" />
+                android:textColor="@color/primary_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="@string/seguidores"
                 android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
+                android:textColor="@color/text_secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <!-- ME GUSTA -->
@@ -135,24 +170,24 @@
 
             <TextView
                 android:id="@+id/user_likes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="0"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/primary_dark" />
+                android:textColor="@color/primary_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="@string/me_gusta"
                 android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
+                android:textColor="@color/text_secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- GALERÍA DE PUBLICACIONES -->
+    <!-- GALERÍA -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/gallery_grid"
         android:layout_width="0dp"

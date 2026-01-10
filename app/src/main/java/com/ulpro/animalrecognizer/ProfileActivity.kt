@@ -25,8 +25,12 @@ class ProfileActivity : AppCompatActivity() {
     private var totalPages = 1
     private var isLoading = false
 
-    // 👤 ID del usuario a visualizar
+    // 👤 Usuario visualizado
     private var perfilUsuarioId: String? = null
+
+    // 👥 Estado seguimiento
+    private var esPropietario = true      // por defecto TRUE (seguridad)
+    private var siguiendo = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,18 +68,15 @@ class ProfileActivity : AppCompatActivity() {
 
         isLoading = true
 
-        val url = ServerConfig.BASE_URL.trimEnd('/') +
-                "/api/usuarios/profile_view.php"
-
-        val body = FormBody.Builder()
-            .add("token", token)
-            .add("pagina", page.toString())
-            .add("usuario_id", perfilUsuarioId!!)
-            .build()
-
         val request = Request.Builder()
-            .url(url)
-            .post(body)
+            .url(ServerConfig.BASE_URL.trimEnd('/') + "/api/usuarios/profile_view.php")
+            .post(
+                FormBody.Builder()
+                    .add("token", token)
+                    .add("pagina", page.toString())
+                    .add("usuario_id", perfilUsuarioId!!)
+                    .build()
+            )
             .build()
 
         client.newCall(request).enqueue(object : Callback {
@@ -94,16 +95,12 @@ class ProfileActivity : AppCompatActivity() {
                     isLoading = false
 
                     if (!response.isSuccessful || bodyStr.isNullOrBlank()) {
-                        showError(
-                            "Error",
-                            "Error del servidor (${response.code})"
-                        )
+                        showError("Error", "Error del servidor (${response.code})")
                         return@runOnUiThread
                     }
 
                     try {
-                        val json = JSONObject(bodyStr)
-                        renderProfile(json)
+                        renderProfile(JSONObject(bodyStr))
                     } catch (e: Exception) {
                         showError("Error", "Respuesta inválida del servidor")
                     }
@@ -113,7 +110,7 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     // --------------------------------------------------
-    // RENDER PERFIL + CONTADORES
+    // RENDER PERFIL + CONTADORES + FOLLOW
     // --------------------------------------------------
     private fun renderProfile(json: JSONObject) {
 
@@ -128,7 +125,7 @@ class ProfileActivity : AppCompatActivity() {
             if (bio.isNotEmpty())
                 bio
             else
-                "Este usuario aún no ha agregado una biografía."
+                ""
 
         Glide.with(this)
             .load(perfil.optString("foto_perfil"))
@@ -147,11 +144,26 @@ class ProfileActivity : AppCompatActivity() {
         binding.statPosts.text =
             paginacion?.optInt("total_publicaciones", 0)?.toString() ?: "0"
 
-        // ---------- PUBLICACIONES ----------
-        val publicaciones = json.optJSONArray("publicaciones")
-        items.clear()
+        // ---------- ESTADO PROPIETARIO / FOLLOW ----------
+        esPropietario = perfil.optBoolean("es_propietario", true)
+        siguiendo = perfil.optBoolean("siguiendo", false)
 
-        if (publicaciones != null) {
+        if (!esPropietario) {
+            // 🔓 PERFIL DE OTRO USUARIO
+            binding.followContainer.visibility = View.VISIBLE
+            updateFollowButton()
+
+            binding.followContainer.setOnClickListener {
+                toggleFollow()
+            }
+        } else {
+            // 🔒 MI PROPIO PERFIL
+            binding.followContainer.visibility = View.GONE
+        }
+
+        // ---------- PUBLICACIONES ----------
+        items.clear()
+        json.optJSONArray("publicaciones")?.let { publicaciones ->
             for (i in 0 until publicaciones.length()) {
                 val p = publicaciones.getJSONObject(i)
                 items.add(
@@ -175,23 +187,80 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     // --------------------------------------------------
+    // UI SEGUIR / SIGUIENDO
+    // --------------------------------------------------
+    private fun updateFollowButton() {
+        if (siguiendo) {
+            binding.btnFollow.setImageResource(R.drawable.ic_follow_check_24dp)
+            binding.txtFollow.text = "Siguiendo"
+        } else {
+            binding.btnFollow.setImageResource(R.drawable.ic_follow_add_24dp)
+            binding.txtFollow.text = "Seguir"
+        }
+    }
+
+    // --------------------------------------------------
+    // TOGGLE FOLLOW
+    // --------------------------------------------------
+    private fun toggleFollow() {
+
+        val token = TokenStore.getToken(this) ?: return
+
+        val request = Request.Builder()
+            .url(ServerConfig.BASE_URL.trimEnd('/') + "/api/usuarios/toggle_follow.php")
+            .post(
+                FormBody.Builder()
+                    .add("token", token)
+                    .add("usuario_id", perfilUsuarioId!!)
+                    .build()
+            )
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    showError("Error", "No se pudo actualizar el seguimiento")
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val bodyStr = response.body?.string() ?: return
+
+                runOnUiThread {
+                    try {
+                        val json = JSONObject(bodyStr)
+                        siguiendo = json.optBoolean("siguiendo", siguiendo)
+
+                        binding.statFollowers.text =
+                            json.optInt(
+                                "seguidores",
+                                binding.statFollowers.text.toString().toInt()
+                            ).toString()
+
+                        updateFollowButton()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        })
+    }
+
+    // --------------------------------------------------
     // RECYCLER VIEW
     // --------------------------------------------------
     private fun setupRecyclerView() {
 
-        val rv = binding.galleryGrid
-        rv.layoutManager = GridLayoutManager(this, 3)
+        binding.galleryGrid.layoutManager = GridLayoutManager(this, 3)
 
-        rv.adapter = GalleryAdapter(items) { item ->
-
-            val intent = Intent(this, FullScreenImageActivity::class.java).apply {
-                putExtra("avistamiento_id", item.id) // 👈 el ID del post
-            }
-
-            startActivity(intent)
+        binding.galleryGrid.adapter = GalleryAdapter(items) { item ->
+            startActivity(
+                Intent(this, FullScreenImageActivity::class.java)
+                    .putExtra("avistamiento_id", item.id)
+            )
         }
 
-        rv.addItemDecoration(object : RecyclerView.ItemDecoration() {
+        binding.galleryGrid.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(
                 outRect: Rect,
                 view: View,
