@@ -31,7 +31,7 @@ class ProfileActivity : AppCompatActivity() {
     // 👥 Estado seguimiento
     private var esPropietario = true      // por defecto TRUE (seguridad)
     private var siguiendo = false
-
+    private var likeado = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -147,14 +147,17 @@ class ProfileActivity : AppCompatActivity() {
         // ---------- ESTADO PROPIETARIO / FOLLOW ----------
         esPropietario = perfil.optBoolean("es_propietario", true)
         siguiendo = perfil.optBoolean("siguiendo", false)
-
+        likeado = perfil.optBoolean("likeado", false)
         if (!esPropietario) {
             // 🔓 PERFIL DE OTRO USUARIO
             binding.followContainer.visibility = View.VISIBLE
             updateFollowButton()
-
+            updateLikeButton()
             binding.followContainer.setOnClickListener {
-                toggleFollow()
+                toggleInteraccion("follow")
+            }
+            binding.likeContainer.setOnClickListener {
+                toggleInteraccion("like")
             }
         } else {
             // 🔒 MI PROPIO PERFIL
@@ -198,20 +201,33 @@ class ProfileActivity : AppCompatActivity() {
             binding.txtFollow.text = "Seguir"
         }
     }
-
     // --------------------------------------------------
-    // TOGGLE FOLLOW
+// UI LIKE / NO LIKE
+// --------------------------------------------------
+    private fun updateLikeButton() {
+        if (likeado) {
+            binding.btnLike.setImageResource(R.drawable.ic_favorite_24dp)
+            binding.txtLike.text = "Te gusta"
+        } else {
+            binding.btnLike.setImageResource(R.drawable.ic_favorite_border_24dp)
+            binding.txtLike.text = "Me gusta"
+        }
+    }
     // --------------------------------------------------
-    private fun toggleFollow() {
+    // TOGGLE Interaccion
+    // --------------------------------------------------
+    private fun toggleInteraccion(accion: String) {
 
         val token = TokenStore.getToken(this) ?: return
+        val usuarioObjetivoId = perfilUsuarioId ?: return
 
         val request = Request.Builder()
-            .url(ServerConfig.BASE_URL.trimEnd('/') + "/api/usuarios/toggle_follow.php")
+            .url(ServerConfig.BASE_URL.trimEnd('/') + "/api/usuarios/toggle_interaccion.php")
             .post(
                 FormBody.Builder()
                     .add("token", token)
-                    .add("usuario_id", perfilUsuarioId!!)
+                    .add("usuario_objetivo_id", usuarioObjetivoId)
+                    .add("accion", accion) // "follow" o "like"
                     .build()
             )
             .build()
@@ -220,31 +236,67 @@ class ProfileActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread {
-                    showError("Error", "No se pudo actualizar el seguimiento")
+                    showError("Error", "No se pudo actualizar la interacción")
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val bodyStr = response.body?.string() ?: return
+                val bodyStr = response.body?.string()
 
                 runOnUiThread {
                     try {
+                        if (!response.isSuccessful || bodyStr.isNullOrBlank()) {
+                            showError("Error", "Error del servidor (${response.code})")
+                            return@runOnUiThread
+                        }
+
                         val json = JSONObject(bodyStr)
-                        siguiendo = json.optBoolean("siguiendo", siguiendo)
+                        val estado = json.optBoolean("estado", false)
 
-                        binding.statFollowers.text =
-                            json.optInt(
-                                "seguidores",
-                                binding.statFollowers.text.toString().toInt()
-                            ).toString()
+                        when (accion) {
 
-                        updateFollowButton()
+                            "follow" -> {
+                                siguiendo = estado
+
+                                // Si el backend devuelve el conteo (ideal), úsalo
+                                if (json.has("seguidores")) {
+                                    binding.statFollowers.text = json.optInt("seguidores", 0).toString()
+                                } else {
+                                    // Fallback: ajustar visualmente (opcional)
+                                    val actuales = binding.statFollowers.text.toString().toIntOrNull() ?: 0
+                                    val nuevos = if (estado) actuales + 1 else maxOf(0, actuales - 1)
+                                    binding.statFollowers.text = nuevos.toString()
+                                }
+
+                                updateFollowButton()
+                            }
+
+                            "like" -> {
+                                likeado = estado
+
+                                // Si el backend devuelve el conteo (ideal), úsalo
+                                if (json.has("likes")) {
+                                    binding.userLikes.text = json.optInt("likes", 0).toString()
+                                } else {
+                                    // Fallback: ajustar visualmente (opcional)
+                                    val actuales = binding.userLikes.text.toString().toIntOrNull() ?: 0
+                                    val nuevos = if (estado) actuales + 1 else maxOf(0, actuales - 1)
+                                    binding.userLikes.text = nuevos.toString()
+                                }
+
+                                updateLikeButton()
+                            }
+                        }
+
                     } catch (_: Exception) {
+                        // Respuesta inválida => no crashea
                     }
                 }
             }
         })
     }
+
+
 
     // --------------------------------------------------
     // RECYCLER VIEW
