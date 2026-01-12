@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation ("androidx.camera:camera-camera2:1.5.2")
     implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")

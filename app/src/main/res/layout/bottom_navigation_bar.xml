@@ -1,123 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:background="@drawable/bg_bottom_nav"
-    android:paddingTop="10dp"
-    android:paddingBottom="12dp">
+    android:layout_height="96dp"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    >
 
+    <!-- Barra base -->
     <LinearLayout
-        android:id="@+id/homeButton"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp">
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_bottom_nav"
+        android:paddingTop="10dp"
+        android:paddingBottom="12dp">
 
-        <ImageView
-            android:id="@+id/homeIcon"
-            android:layout_width="wrap_content"
+        <!-- HOME -->
+        <LinearLayout
+            android:id="@+id/homeButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_home_black_24dp"
-            app:tint="@color/text_secondary"
-            android:contentDescription="@string/Inicio" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            tools:ignore="UseCompoundDrawables">
 
-        <TextView
-            android:id="@+id/homeText"
-            android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/homeIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_home_black_24dp"
+                android:contentDescription="@string/Inicio"
+                app:tint="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/homeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/Inicio"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- CATEGORÍAS -->
+        <LinearLayout
+            android:id="@+id/categoriesButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/Inicio"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:id="@+id/categoriesIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_category_24dp"
+                app:tint="@color/text_secondary"
+                android:contentDescription="@string/categorias" />
+
+            <TextView
+                android:id="@+id/categoriesText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/categorias"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- ESPACIO PARA FAB -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- FAVORITOS -->
+        <LinearLayout
+            android:id="@+id/favoritesButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:id="@+id/favoritesIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/favoritos"
+                android:src="@drawable/ic_bookmark_24dp"
+                app:tint="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/favoritesText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/favoritos"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- PERFIL -->
+        <LinearLayout
+            android:id="@+id/profileButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:id="@+id/profileIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/Perfil"
+                android:src="@drawable/ic_person_black_24dp"
+                app:tint="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/profileText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/Perfil"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/galleryButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp">
+    <!-- BOTÓN CENTRAL -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/scanFab"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        app:fabCustomSize="64dp"
+        app:maxImageSize="28dp"
+        android:scaleType="center"
+        android:layout_gravity="top|center_horizontal"
+        app:srcCompat="@drawable/ic_add_photo_24dp"
+        app:backgroundTint="@color/primary"
+        app:tint="@color/black"
+        android:contentDescription="@string/escanear"
+        app:elevation="10dp" />
 
-        <ImageView
-            android:id="@+id/galleryIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_photo_library_black_24dp"
-            app:tint="@color/text_secondary"
-            android:contentDescription="@string/Galeria" />
-
-        <TextView
-            android:id="@+id/galleryText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/Galeria"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/profileButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp">
-
-        <ImageView
-            android:id="@+id/profileIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_person_black_24dp"
-            app:tint="@color/text_secondary"
-            android:contentDescription="@string/Perfil" />
-
-        <TextView
-            android:id="@+id/profileText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/Perfil"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/SettingsButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp">
-
-        <ImageView
-            android:id="@+id/SettingsIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_settings_black_24dp"
-            app:tint="@color/text_secondary"
-            android:contentDescription="@string/Configuracion" />
-
-        <TextView
-            android:id="@+id/Settingsext"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/Configuracion"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary" />
-
-    </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>

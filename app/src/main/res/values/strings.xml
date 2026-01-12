@@ -192,4 +192,7 @@
     <string name="comentarios">comentarios</string>
     <string name="vistas">vistas</string>
     <string name="seguir">seguir</string>
+    <string name="escanear">Escanear</string>
+    <string name="categorias">Categorias</string>
+    <string name="favoritos">Favoritos</string>
 </resources>

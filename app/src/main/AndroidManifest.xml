@@ -6,6 +6,7 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission
@@ -19,8 +20,8 @@
         android:maxSdkVersion="33" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <application
         android:name=".MyApplication"
         android:icon="@mipmap/ic_launcher"
@@ -30,6 +31,9 @@
         android:theme="@style/Theme.AnimalRecognizer"
         android:usesCleartextTraffic="true"
         tools:replace="android:icon">
+        <activity
+            android:name=".LiveScanActivity"
+            android:exported="false" />
         <!-- ✅ REQUIRED FOR ANDROID 14+ (WorkManager Foreground) -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
@@ -38,8 +42,8 @@
 
         <activity
             android:name=".SearchActivity"
-            android:theme="@style/FullScreenDialogTheme"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/FullScreenDialogTheme" />
         <activity
             android:name=".FullScreenImageActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
