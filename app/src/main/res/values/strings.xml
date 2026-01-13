@@ -195,4 +195,7 @@
     <string name="escanear">Escanear</string>
     <string name="categorias">Categorias</string>
     <string name="favoritos">Favoritos</string>
+    <string name="animal">animal</string>
+    <string name="galeria">galeria</string>
+    <string name="captura">Captura</string>
 </resources>

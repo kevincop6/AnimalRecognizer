@@ -164,7 +164,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:layout_marginEnd="24dp">
 
                 <ImageView
                     android:id="@+id/ic_comments"
@@ -184,7 +185,33 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
+            <!-- ANIMAL -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/ic_animal"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="@string/animal"
+                    android:src="@drawable/tapir_icon"
+                    app:tint="@color/text_secondary" />
+
+                <TextView
+                    android:id="@+id/tv_animal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/nombre_en_espanol"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
         </LinearLayout>
+
 
     </LinearLayout>
 

@@ -27,13 +27,14 @@ class FullScreenImageActivity : AppCompatActivity() {
     private lateinit var tvLikes: TextView
     private lateinit var tvViews: TextView
     private lateinit var tvComments: TextView
+    private lateinit var tvAnimal: TextView
     private lateinit var icLike: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_full_screen_image)
 
-        // ---------- Views ----------
+        // ---------------- Views ----------------
         viewPager = findViewById(R.id.imagePager)
         tvTitle = findViewById(R.id.tv_post_title)
         tvDate = findViewById(R.id.tv_post_date)
@@ -41,6 +42,7 @@ class FullScreenImageActivity : AppCompatActivity() {
         tvLikes = findViewById(R.id.tv_likes)
         tvViews = findViewById(R.id.tv_views)
         tvComments = findViewById(R.id.tv_comments)
+        tvAnimal = findViewById(R.id.tv_animal)
         icLike = findViewById(R.id.ic_like)
 
         val btnPrev = findViewById<ImageButton>(R.id.btn_prev)
@@ -50,7 +52,7 @@ class FullScreenImageActivity : AppCompatActivity() {
         btnClose.setOnClickListener { finish() }
 
         val avistamientoId = intent.getIntExtra("avistamiento_id", -1)
-        if (avistamientoId == -1) {
+        if (avistamientoId <= 0) {
             finish()
             return
         }
@@ -58,14 +60,16 @@ class FullScreenImageActivity : AppCompatActivity() {
         fetchAvistamiento(avistamientoId)
 
         btnPrev.setOnClickListener {
-            if (viewPager.currentItem > 0) {
-                viewPager.currentItem -= 1
+            if (::imageAdapter.isInitialized && viewPager.currentItem > 0) {
+                viewPager.currentItem--
             }
         }
 
         btnNext.setOnClickListener {
-            if (viewPager.currentItem < (imageAdapter.itemCount - 1)) {
-                viewPager.currentItem += 1
+            if (::imageAdapter.isInitialized &&
+                viewPager.currentItem < imageAdapter.itemCount - 1
+            ) {
+                viewPager.currentItem++
             }
         }
     }
@@ -105,6 +109,7 @@ class FullScreenImageActivity : AppCompatActivity() {
                 val av = root.getJSONObject("avistamiento")
                 val metrics = root.getJSONObject("metricas")
 
+                // --------- Imágenes ----------
                 val imageUrls = mutableListOf<String>()
                 val imgs = av.getJSONArray("imagenes")
                 for (i in 0 until imgs.length()) {
@@ -113,12 +118,16 @@ class FullScreenImageActivity : AppCompatActivity() {
 
                 withContext(Dispatchers.Main) {
 
-                    // Texto
-                    tvTitle.text = av.getString("titulo")
-                    tvDescription.text = av.getString("descripcion")
-                    tvDate.text = formatDate(av.getString("fecha"))
+                    // --------- Texto ----------
+                    tvTitle.text = av.optString("titulo", "")
+                    tvDescription.text = av.optString("descripcion", "")
+                    tvDate.text = formatDate(av.optString("fecha", ""))
 
-                    // Métricas
+                    // --------- Animal ----------
+                    val animalObj = av.getJSONObject("animal")
+                    tvAnimal.text = animalObj.optString("nombre_comun", "")
+
+                    // --------- Métricas ----------
                     tvLikes.text = metrics.getInt("likes").toString()
                     tvViews.text = metrics.getInt("vistas").toString()
                     tvComments.text = metrics.getInt("comentarios").toString()
@@ -131,7 +140,7 @@ class FullScreenImageActivity : AppCompatActivity() {
                         )
                     )
 
-                    // ViewPager
+                    // --------- ViewPager ----------
                     imageAdapter = AvistamientoImagePagerAdapter(imageUrls)
                     viewPager.adapter = imageAdapter
                 }
@@ -142,7 +151,7 @@ class FullScreenImageActivity : AppCompatActivity() {
     }
 
     // --------------------------------------------------
-    // 🗓 Fecha legible (simple)
+    // 🗓 Fecha legible
     // --------------------------------------------------
     private fun formatDate(raw: String): String {
         // Esperado: yyyy-MM-dd HH:mm:ss
@@ -150,7 +159,7 @@ class FullScreenImageActivity : AppCompatActivity() {
             val parts = raw.split(" ")
             val date = parts[0].split("-")
             "${date[2]}/${date[1]}/${date[0]}"
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             raw
         }
     }
