@@ -15,41 +15,61 @@ class BottomNavigationHelper(
     private val fragmentManager: FragmentManager
 ) {
 
-    // Tags
+    // -----------------------------
+    // TAGS
+    // -----------------------------
     private val homeTag = "AVISTAMIENTOS_FRAGMENT"
     private val categoriesTag = "CATEGORIES_FRAGMENT"
     private val favoritesTag = "FAVORITES_FRAGMENT"
     private val profileTag = "PROFILE_FRAGMENT"
 
-    // Buttons
+    // -----------------------------
+    // BOTONES
+    // -----------------------------
     private val homeButton: LinearLayout by lazy { activity.findViewById(R.id.homeButton) }
     private val categoriesButton: LinearLayout by lazy { activity.findViewById(R.id.categoriesButton) }
     private val favoritesButton: LinearLayout by lazy { activity.findViewById(R.id.favoritesButton) }
     private val profileButton: LinearLayout by lazy { activity.findViewById(R.id.profileButton) }
     private val scanFab: FloatingActionButton by lazy { activity.findViewById(R.id.scanFab) }
 
+    // -----------------------------
+    // SETUP
+    // -----------------------------
     fun setup() {
 
+        // HOME
         homeButton.setOnClickListener {
             if (fragmentManager.primaryNavigationFragment is AvistamientosFragment) return@setOnClickListener
-            switchFragment(getOrCreateFragment(homeTag) { AvistamientosFragment() }, homeTag)
+            switchFragment(
+                getOrCreateFragment(homeTag) { AvistamientosFragment() },
+                homeTag
+            )
         }
 
+        // CATEGORÍAS
         categoriesButton.setOnClickListener {
-            if (fragmentManager.primaryNavigationFragment is AnimalesFragment) return@setOnClickListener
-            switchFragment(getOrCreateFragment(categoriesTag) { AnimalesFragment() }, categoriesTag)
+            if (fragmentManager.primaryNavigationFragment is fragment_categorias) return@setOnClickListener
+            switchFragment(
+                getOrCreateFragment(categoriesTag) { fragment_categorias() },
+                categoriesTag
+            )
         }
 
+        // FAVORITOS (pendiente)
         favoritesButton.setOnClickListener {
-
+            // TODO: implementar FavoritesFragment
         }
 
+        // PERFIL
         profileButton.setOnClickListener {
             if (fragmentManager.primaryNavigationFragment is ProfileFragment) return@setOnClickListener
-            switchFragment(getOrCreateFragment(profileTag) { ProfileFragment() }, profileTag)
+            switchFragment(
+                getOrCreateFragment(profileTag) { ProfileFragment() },
+                profileTag
+            )
         }
 
-        // FAB central (NO fragment)
+        // FAB CENTRAL (NO ES FRAGMENT)
         scanFab.setOnClickListener {
             activity.startActivity(
                 Intent(activity, LiveScanActivity::class.java)
@@ -57,6 +77,9 @@ class BottomNavigationHelper(
         }
     }
 
+    // -----------------------------
+    // FRAGMENT INICIAL
+    // -----------------------------
     fun showInitialFragment() {
         switchFragment(
             getOrCreateFragment(homeTag) { AvistamientosFragment() },
@@ -65,6 +88,9 @@ class BottomNavigationHelper(
         )
     }
 
+    // -----------------------------
+    // FRAGMENT MANAGEMENT
+    // -----------------------------
     private fun getOrCreateFragment(tag: String, creator: () -> Fragment): Fragment {
         return fragmentManager.findFragmentByTag(tag) ?: creator()
     }
@@ -94,24 +120,24 @@ class BottomNavigationHelper(
         }
 
         ft.commit()
+
         updateButtonState()
     }
 
     // -----------------------------
-    // UI State
+    // UI STATE
     // -----------------------------
-
     fun updateButtonState() {
         val current = fragmentManager.primaryNavigationFragment
 
-        markButtons(
-            activeButton = when (current) {
-                is AvistamientosFragment -> homeButton
-                is AnimalesFragment -> categoriesButton
-                is ProfileFragment -> profileButton
-                else -> null
-            }
-        )
+        val activeButton = when (current) {
+            is AvistamientosFragment -> homeButton
+            is fragment_categorias -> categoriesButton
+            is ProfileFragment -> profileButton
+            else -> null
+        }
+
+        markButtons(activeButton)
     }
 
     private fun markButtons(activeButton: LinearLayout?) {
@@ -126,23 +152,23 @@ class BottomNavigationHelper(
         )
 
         buttons.forEach { button ->
-            val icon = button.findViewById<ImageView>(
-                when (button) {
-                    homeButton -> R.id.homeIcon
-                    categoriesButton -> R.id.categoriesIcon
-                    favoritesButton -> R.id.favoritesIcon
-                    else -> R.id.profileIcon
-                }
-            )
 
-            val text = button.findViewById<TextView>(
-                when (button) {
-                    homeButton -> R.id.homeText
-                    categoriesButton -> R.id.categoriesText
-                    favoritesButton -> R.id.favoritesText
-                    else -> R.id.profileText
-                }
-            )
+            val iconId = when (button) {
+                homeButton -> R.id.homeIcon
+                categoriesButton -> R.id.categoriesIcon
+                favoritesButton -> R.id.favoritesIcon
+                else -> R.id.profileIcon
+            }
+
+            val textId = when (button) {
+                homeButton -> R.id.homeText
+                categoriesButton -> R.id.categoriesText
+                favoritesButton -> R.id.favoritesText
+                else -> R.id.profileText
+            }
+
+            val icon = button.findViewById<ImageView>(iconId)
+            val text = button.findViewById<TextView>(textId)
 
             val colorRes = if (button == activeButton) activeColor else inactiveColor
             val color = ContextCompat.getColor(activity, colorRes)

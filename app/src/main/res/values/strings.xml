@@ -200,4 +200,5 @@
     <string name="galeria">galeria</string>
     <string name="captura">Captura</string>
     <string name="suspencion">---</string>
+    <string name="categoria_imagen">categoria imagen</string>
 </resources>
