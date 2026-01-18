@@ -15,6 +15,8 @@
     <string name="kb_cero">0KB</string>
     <string name="species">Species</string>
     <string name="ver_detalles">Ver detalles</string>
+    <string name="imagen_animal">Imagen del animal</string>
+    <string name="leer_descripcion">Leer descripción</string>
     <string name="user_email">Correo Usuario</string>
     <string name="animal_name_default">Animal Name</string>
     <string name="recycler_view_description">Lista de animales avistados</string>
