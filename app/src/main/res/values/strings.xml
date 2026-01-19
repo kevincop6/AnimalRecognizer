@@ -203,4 +203,9 @@
     <string name="captura">Captura</string>
     <string name="suspencion">---</string>
     <string name="categoria_imagen">categoria imagen</string>
+    <string name="volver">volver</string>
+    <string name="animal_image">animal_image</string>
+    <string name="nombre_com_n">Nombre común</string>
+    <string name="nombre_cient_fico">Nombre científico</string>
+    <string name="title_activity_full_screen_gallery">FullScreenGalleryActivity</string>
 </resources>

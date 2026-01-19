@@ -12,7 +12,7 @@ class AvistamientoImagePagerAdapter(
 ) : RecyclerView.Adapter<AvistamientoImagePagerAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val imageView: ImageView = itemView.findViewById(R.id.iv_pager_image)
+        val imageView: ImageView = itemView.findViewById(R.id.photoView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

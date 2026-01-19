@@ -98,5 +98,6 @@ dependencies {
 
     // Se usa para encriptar datos
     implementation("androidx.security:security-crypto:1.1.0")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
 
 }

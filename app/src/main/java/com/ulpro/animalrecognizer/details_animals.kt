@@ -1,16 +1,21 @@
 package com.ulpro.animalrecognizer
 
-import android.app.Dialog
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -28,17 +33,26 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 class details_animals : AppCompatActivity() {
 
+    companion object {
+        private const val REQUEST_FULLSCREEN = 1001
+    }
+
     private lateinit var imageView: ImageView
+    private lateinit var rvGallery: RecyclerView
+    private lateinit var galleryAdapter: GalleryThumbAdapter
+    private lateinit var gestureDetector: GestureDetectorCompat
+    private lateinit var textToSpeech: TextToSpeech
+
     private val imageUrlList = mutableListOf<String>()
     private var currentIndex = 0
 
-    private lateinit var textToSpeech: TextToSpeech
-    private var currentText = ""
-    private var currentPosition = 0
 
+    private lateinit var btnFavorite: ImageButton
+    private var isFavorite = false
     private val httpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -55,27 +69,25 @@ class details_animals : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_details_animals)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.contentCard)) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            v.setPadding(0, 0, 0, bars.bottom)
             insets
         }
 
+
+
         imageView = findViewById(R.id.imageViewAnimal)
-
-        imageView.setOnClickListener {
-            if (imageUrlList.isNotEmpty()) {
-                val dialog = Dialog(this)
-                dialog.setContentView(R.layout.dialog_fullscreen_image)
-                Glide.with(this)
-                    .load(imageUrlList[currentIndex])
-                    .into(dialog.findViewById(R.id.fullScreenImageView))
-                dialog.show()
-            }
-        }
-
-        setupImageNavigationButtons()
+        rvGallery = findViewById(R.id.rvGallery)
+        btnFavorite = findViewById(R.id.btnFavorite)
+        setupGallery()
+        setupImageSwipe()
         setupTextToSpeech()
+
+        // Tap en imagen principal -> fullscreen en índice actual
+        imageView.setOnClickListener {
+            openFullScreenGallery(currentIndex)
+        }
 
         val animalId = intent.getIntExtra("animalId", -1)
         if (animalId != -1) {
@@ -87,6 +99,113 @@ class details_animals : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { finish() }
         })
+    }
+
+    // =========================================================
+    // GALERÍA (MINIATURAS)
+    // =========================================================
+    private fun setupGallery() {
+        galleryAdapter = GalleryThumbAdapter { position ->
+            // Mostrar esa imagen en principal + marcar selección
+            setImageAt(position)
+            // Abrir fullscreen arrancando en esa miniatura
+            openFullScreenGallery(position)
+        }
+
+        rvGallery.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        rvGallery.adapter = galleryAdapter
+    }
+
+    private fun setImageAt(position: Int) {
+        if (position !in imageUrlList.indices) return
+        currentIndex = position
+        showCurrentImage()
+        galleryAdapter.setSelected(position)
+        rvGallery.smoothScrollToPosition(position)
+    }
+
+    private fun showCurrentImage() {
+        if (imageUrlList.isEmpty() || currentIndex !in imageUrlList.indices) return
+
+        imageView.visibility = View.VISIBLE
+
+        Glide.with(this)
+            .load(imageUrlList[currentIndex])
+            .placeholder(R.drawable.placeholder_image)
+            .error(R.drawable.placeholder_image)
+            .into(imageView)
+    }
+
+    // =========================================================
+    // SWIPE EN IMAGEN PRINCIPAL (IZQ/DER)
+    // =========================================================
+    private fun setupImageSwipe() {
+
+        gestureDetector = GestureDetectorCompat(
+            this,
+            object : GestureDetector.SimpleOnGestureListener() {
+
+                private val threshold = 120
+                private val velocityThreshold = 120
+
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float
+                ): Boolean {
+
+                    if (e1 == null) return false
+                    if (imageUrlList.isEmpty()) return false
+
+                    val diffX = e2.x - e1.x
+                    val diffY = e2.y - e1.y
+
+                    if (abs(diffX) > abs(diffY)
+                        && abs(diffX) > threshold
+                        && abs(velocityX) > velocityThreshold
+                    ) {
+                        if (diffX < 0) {
+                            // swipe left -> siguiente
+                            if (currentIndex < imageUrlList.lastIndex) setImageAt(currentIndex + 1)
+                        } else {
+                            // swipe right -> anterior
+                            if (currentIndex > 0) setImageAt(currentIndex - 1)
+                        }
+                        return true
+                    }
+                    return false
+                }
+            }
+        )
+
+        imageView.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            true
+        }
+    }
+
+    // =========================================================
+    // FULLSCREEN (VIEWPAGER + ZOOM)
+    // =========================================================
+    private fun openFullScreenGallery(startIndex: Int) {
+        if (imageUrlList.isEmpty()) return
+
+        val i = Intent(this, FullScreenGalleryActivity::class.java)
+        i.putStringArrayListExtra("images", ArrayList(imageUrlList))
+        i.putExtra("startIndex", startIndex)
+        startActivityForResult(i, REQUEST_FULLSCREEN)
+    }
+
+    @Deprecated("Using startActivityForResult for simplicity with existing codebase.")
+    @SuppressLint("MissingSuperCall")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_FULLSCREEN && resultCode == RESULT_OK) {
+            val index = data?.getIntExtra("index", currentIndex) ?: currentIndex
+            setImageAt(index)
+        }
     }
 
     // =========================================================
@@ -125,9 +244,7 @@ class details_animals : AppCompatActivity() {
                     withContext(Dispatchers.Main) { loading.dismissWithAnimation() }
 
                     if (!response.isSuccessful) {
-                        withContext(Dispatchers.Main) {
-                            showErrorDialog("Error ${response.code}")
-                        }
+                        withContext(Dispatchers.Main) { showErrorDialog("Error ${response.code}") }
                         return@use
                     }
 
@@ -137,8 +254,8 @@ class details_animals : AppCompatActivity() {
 
                     withContext(Dispatchers.Main) {
                         populateTextFieldsFromApi(animal)
-                        setupRecommendationsFromApi(recomendaciones)
                         populateImages(animal.optJSONArray("imagenes"))
+                        setupRecommendationsFromApi(recomendaciones)
                     }
                 }
 
@@ -152,7 +269,7 @@ class details_animals : AppCompatActivity() {
     }
 
     // =========================================================
-    // UI POPULATION
+    // UI POPULATION (TEXTOS + CARDS)
     // =========================================================
     private fun populateTextFieldsFromApi(animal: JSONObject) {
 
@@ -162,6 +279,8 @@ class details_animals : AppCompatActivity() {
         findViewById<TextView>(R.id.tvNombreIngles).text =
             animal.optString("nombre_ingles", "N/A")
 
+        // (Según tu XML actual, tvNombreCientifico está en overlay; si luego lo movés al card,
+        // este findViewById seguirá funcionando mientras exista el ID)
         findViewById<TextView>(R.id.tvNombreCientifico).text =
             animal.optString("nombre_cientifico", "N/A")
 
@@ -174,17 +293,28 @@ class details_animals : AppCompatActivity() {
             ?.optString("texto", "Descripción no disponible")
             ?: "Descripción no disponible"
 
+        isFavorite = animal.optBoolean("es_favorito", false)
+        updateFavoriteUI()
         findViewById<TextView>(R.id.tvDescripcion).text = descripcion
 
-        animal.optJSONObject("taxonomia")?.let {
-            findViewById<TextView>(R.id.tvReino).text = it.optString("reino", "N/A")
-            findViewById<TextView>(R.id.tvFilo).text = it.optString("filo", "N/A")
-            findViewById<TextView>(R.id.tvClase).text = it.optString("clase", "N/A")
-            findViewById<TextView>(R.id.tvOrden).text = it.optString("orden", "N/A")
-            findViewById<TextView>(R.id.tvFamilia).text = it.optString("familia", "N/A")
-            findViewById<TextView>(R.id.tvGenero).text = it.optString("genero", "N/A")
+        // ---------- TAXONOMÍA ----------
+        animal.optJSONObject("taxonomia")?.let { tax ->
+            findViewById<TextView>(R.id.tvReino).text = tax.optString("reino", "N/A")
+            findViewById<TextView>(R.id.tvFilo).text = tax.optString("filo", "N/A")
+            findViewById<TextView>(R.id.tvOrden).text = tax.optString("orden", "N/A")
+            findViewById<TextView>(R.id.tvFamilia).text = tax.optString("familia", "N/A")
+            findViewById<TextView>(R.id.tvGenero).text = tax.optString("genero", "N/A")
+
+            // Card: Clase
+            bindInfoCard(
+                includeRootId = R.id.cardClase,
+                iconRes = R.drawable.ic_info_24,
+                valueText = tax.optString("clase", "N/A"),
+                labelText = "Clase"
+            )
         }
 
+        // ---------- DISTRIBUCIÓN / HÁBITAT / ESTADO ----------
         animal.optJSONObject("distribucion")?.let { dist ->
             val core = dist.optJSONObject("distribucion")
 
@@ -194,57 +324,82 @@ class details_animals : AppCompatActivity() {
             findViewById<TextView>(R.id.tvPaisesExtinct).text =
                 core?.optJSONArray("paises_extinct")?.toList()?.joinToString(", ") ?: "N/A"
 
-            findViewById<TextView>(R.id.tvHabitat).text =
-                dist.optJSONArray("habitat")?.toList()?.joinToString(", ") ?: "N/A"
-
-            findViewById<TextView>(R.id.tvEstatusConservacion).text =
-                dist.optString("estatus_conservacion", "N/A")
-
             findViewById<TextView>(R.id.tvFuenteConservacion).text =
                 dist.optJSONObject("fuente")?.optString("nombre", "N/A") ?: "N/A"
+
+            val habitatTxt =
+                dist.optJSONArray("habitat")?.toList()?.joinToString(", ") ?: "N/A"
+
+            val estadoTxt =
+                dist.optString("estatus_conservacion", "N/A")
+
+            // Card: Hábitat
+            bindInfoCard(
+                includeRootId = R.id.cardHabitat,
+                iconRes = R.drawable.ic_info_24,
+                valueText = habitatTxt,
+                labelText = "Hábitat"
+            )
+
+            // Card: Estado
+            bindInfoCard(
+                includeRootId = R.id.cardEstado,
+                iconRes = R.drawable.ic_info_24,
+                valueText = estadoTxt,
+                labelText = "Estado"
+            )
         }
+    }
+    private fun updateFavoriteUI() {
+        if (isFavorite) {
+            btnFavorite.setImageResource(R.drawable.baseline_favorite_24)
+            btnFavorite.setColorFilter(getColor(R.color.red))
+        } else {
+            btnFavorite.setImageResource(R.drawable.ic_favorite_border_24dp)
+            btnFavorite.setColorFilter(getColor(R.color.white))
+        }
+    }
+    // Helper para tus cards: item_info_card
+    private fun bindInfoCard(
+        includeRootId: Int,
+        iconRes: Int,
+        valueText: String,
+        labelText: String
+    ) {
+        val root = findViewById<View>(includeRootId)
+        val icon = root.findViewById<ImageView>(R.id.icon)
+        val value = root.findViewById<TextView>(R.id.value)
+        val label = root.findViewById<TextView>(R.id.label)
+
+        icon.setImageResource(iconRes)
+        value.text = valueText
+        label.text = labelText
     }
 
     // =========================================================
-    // IMÁGENES
+    // IMÁGENES (LISTA + ADAPTER)
     // =========================================================
     private fun populateImages(arr: JSONArray?) {
         imageUrlList.clear()
         currentIndex = 0
 
-        if (arr == null) return
+        if (arr == null || arr.length() == 0) {
+            galleryAdapter.submitList(emptyList())
+            return
+        }
 
         val ordered = (0 until arr.length())
             .mapNotNull { arr.optJSONObject(it) }
             .sortedByDescending { it.optInt("es_principal", 0) }
-            .map { it.optString("url_archivo") }
+            .mapNotNull { obj ->
+                obj.optString("url_archivo", null)?.takeIf { it.isNotBlank() }
+            }
 
         imageUrlList.addAll(ordered)
 
-        if (imageUrlList.isNotEmpty()) {
-            showCurrentImage()
-        }
-    }
-
-    private fun showCurrentImage() {
-        Glide.with(this)
-            .load(imageUrlList[currentIndex])
-            .into(imageView)
-    }
-
-    private fun setupImageNavigationButtons() {
-        findViewById<Button>(R.id.buttonPrevious).setOnClickListener {
-            if (currentIndex > 0) {
-                currentIndex--
-                showCurrentImage()
-            }
-        }
-        findViewById<Button>(R.id.buttonNext).setOnClickListener {
-            if (currentIndex < imageUrlList.size - 1) {
-                currentIndex++
-                showCurrentImage()
-            }
-        }
+        galleryAdapter.submitList(imageUrlList)
+        if (imageUrlList.isNotEmpty()) setImageAt(0)
+        imageView.post { showCurrentImage() }
     }
 
     // =========================================================
@@ -253,8 +408,7 @@ class details_animals : AppCompatActivity() {
     private fun setupRecommendationsFromApi(recs: JSONArray?) {
 
         val rv = findViewById<RecyclerView>(R.id.rvRecomendaciones)
-        rv.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        rv.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
         if (recs == null || recs.length() == 0) {
             rv.visibility = View.GONE
@@ -266,13 +420,14 @@ class details_animals : AppCompatActivity() {
             val obj = recs.getJSONObject(i)
             items.add(
                 RecommendationItem(
-                    id = obj.getInt("id"),
-                    name = obj.getString("nombre"),
-                    imageUrl = obj.getString("imagen_principal")
+                    id = obj.optInt("id", -1),
+                    name = obj.optString("nombre", ""),
+                    imageUrl = obj.optString("imagen_principal", "")
                 )
             )
         }
 
+        rv.visibility = View.VISIBLE
         rv.adapter = RecommendationAdapter(items) { id ->
             startActivity(
                 Intent(this, details_animals::class.java)
@@ -293,12 +448,16 @@ class details_animals : AppCompatActivity() {
         }
 
         btn.setOnClickListener {
-            val text = findAllText(findViewById(R.id.main))
             if (textToSpeech.isSpeaking) {
                 textToSpeech.stop()
                 btn.setImageResource(R.drawable.ic_play_circle_black_24dp)
             } else {
-                textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts")
+                textToSpeech.speak(
+                    findAllText(findViewById(R.id.main)),
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "tts"
+                )
                 btn.setImageResource(R.drawable.ic_pause_black_24dp)
             }
         }
@@ -344,9 +503,7 @@ class details_animals : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        if (::textToSpeech.isInitialized) {
-            textToSpeech.shutdown()
-        }
+        if (::textToSpeech.isInitialized) textToSpeech.shutdown()
         super.onDestroy()
     }
 }

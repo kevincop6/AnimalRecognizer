@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.ulpro.animalrecognizer">
+
     <!-- Permisos -->
     <uses-feature
         android:name="android.hardware.camera"
@@ -32,9 +33,14 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:icon">
         <activity
+            android:name=".FullScreenGalleryActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:label="@string/title_activity_full_screen_gallery"
+            android:theme="@style/Theme.AnimalRecognizer.Fullscreen" />
+        <activity
             android:name=".LiveScanActivity"
-            android:exported="false" />
-        <!-- ✅ REQUIRED FOR ANDROID 14+ (WorkManager Foreground) -->
+            android:exported="false" /> <!-- ✅ REQUIRED FOR ANDROID 14+ (WorkManager Foreground) -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:exported="false"

@@ -1,295 +1,237 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:fillViewport="true"
-    android:overScrollMode="never">
+    android:background="@color/black">
 
-    <LinearLayout
+    <!-- HERO IMAGE -->
+    <ImageView
+        android:id="@+id/imageViewAnimal"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerInside"
+        android:adjustViewBounds="true"
+        android:background="@android:color/black"
+        android:contentDescription="@string/animal_image" />
+
+    <!-- Gradiente para legibilidad de textos encima de la imagen -->
+    <View
+        android:id="@+id/heroGradient"
+        android:layout_width="0dp"
+        android:layout_height="260dp"
+        android:background="@drawable/bg_hero_bottom_gradient"
+        app:layout_constraintBottom_toBottomOf="@id/imageViewAnimal"
+        app:layout_constraintStart_toStartOf="@id/imageViewAnimal"
+        app:layout_constraintEnd_toEndOf="@id/imageViewAnimal" />
+
+    <!-- BOTÓN FAVORITO -->
+    <ImageButton
+        android:id="@+id/btnFavorite"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_circle_dark"
+        android:src="@drawable/baseline_favorite_24"
+        android:contentDescription="@string/favoritos"
+        app:tint="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- (Opcional) BOTÓN BACK -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_circle_dark"
+        android:src="@drawable/ic_arrow_back_24"
+        android:contentDescription="@string/volver"
+        app:tint="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- ========================= -->
+    <!-- OVERLAY TEXT (ENCIMA DE LA IMAGEN) -->
+    <!-- Nombre común + Inglés (como tu ejemplo) -->
+    <!-- ========================= -->
+    <LinearLayout
+        android:id="@+id/heroTextOverlay"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="18dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/contentCard">
 
-        <!-- ================= HEADER ================= -->
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="300dp">
 
-            <ImageView
-                android:id="@+id/imageViewAnimal"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@string/imagen_animal" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:layout_gravity="bottom"
-                android:background="@drawable/gradient_background" />
-
-            <ImageButton
-                android:id="@+id/btnFavorite"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="top|end"
-                android:layout_margin="16dp"
-                android:background="@drawable/bg_circle_white"
-                android:src="@drawable/baseline_favorite_24"
-                android:padding="12dp"
-                android:elevation="10dp"
-                android:contentDescription="@string/favoritos" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/tvNombreComun"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="26sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/tvNombreIngles"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="15sp"
-                    android:textColor="@android:color/white" />
-            </LinearLayout>
-
-            <!-- Navegación de imágenes -->
-            <Button
-                android:id="@+id/buttonPrevious"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="8dp"
-                android:background="@android:color/transparent"
-                android:drawableStart="@drawable/ic_arrow_left"
-                android:drawableTint="@android:color/white"
-                android:contentDescription="@string/anterior" />
-
-            <Button
-                android:id="@+id/buttonNext"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center_vertical|end"
-                android:layout_marginEnd="8dp"
-                android:background="@android:color/transparent"
-                android:drawableEnd="@drawable/ic_arrow_right"
-                android:drawableTint="@android:color/white"
-                android:contentDescription="@string/siguiente" />
-        </FrameLayout>
-
-        <!-- ================= CARD RESUMEN ================= -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardResumenAnimal"
-            android:layout_width="match_parent"
+        <!-- Científico ahora dentro del card -->
+        <TextView
+            android:id="@+id/tvNombreCientifico"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-24dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="8dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvNombreCientifico"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textStyle="italic"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/tvPaisOrigen"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- ================= CARD DESCRIPCIÓN ================= -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardDescripcion"
-            android:layout_width="match_parent"
+            android:text="—"
+            android:textSize="12sp"
+            android:textColor="#CCFFFFFF"
+            tools:text="Panthera onca" />
+        <!-- Nombre común grande -->
+        <TextView
+            android:id="@+id/tvNombreComun"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="6dp"
-            app:cardUseCompatPadding="true">
+            android:text="—"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            tools:text="Bali Island" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvDescripcion"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="16sp" />
-
-                <ImageButton
-                    android:id="@+id/btnLeerDescripcion"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_gravity="end"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_circle_white"
-                    android:src="@drawable/ic_play_circle_black_24dp"
-                    android:padding="12dp"
-                    android:elevation="8dp"
-                    android:contentDescription="@string/leer_descripcion" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- ================= CARD TAXONOMÍA ================= -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardTaxonomia"
-            android:layout_width="match_parent"
+        <!-- Inglés (en lugar del científico) -->
+        <TextView
+            android:id="@+id/tvNombreIngles"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="6dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Taxonomía"
-                    android:textStyle="bold"
-                    android:textSize="18sp" />
-
-                <TextView android:id="@+id/tvReino"   android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvFilo"    android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvClase"   android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvOrden"   android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvFamilia" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvGenero"  android:layout_width="match_parent" android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- ================= CARD DISTRIBUCIÓN ================= -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardDistribucion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="6dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Distribución"
-                    android:textStyle="bold"
-                    android:textSize="18sp" />
-
-                <TextView android:id="@+id/tvPaisesExtant"  android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvPaisesExtinct" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hábitat"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:layout_marginTop="10dp" />
-
-                <TextView android:id="@+id/tvHabitat" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- ================= CARD CONSERVACIÓN ================= -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardConservacion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="6dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Conservación"
-                    android:textStyle="bold"
-                    android:textSize="18sp" />
-
-                <TextView android:id="@+id/tvEstatusConservacion" android:layout_width="match_parent" android:layout_height="wrap_content"/>
-                <TextView android:id="@+id/tvFuenteConservacion"  android:layout_width="match_parent" android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- ================= CARD RECOMENDACIONES ================= -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardRecomendaciones"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="6dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Recomendaciones"
-                    android:textStyle="bold"
-                    android:textSize="18sp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvRecomendaciones"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
+            android:text="—"
+            android:textSize="14sp"
+            android:textColor="#D9FFFFFF"
+            tools:text="English name" />
     </LinearLayout>
-</ScrollView>
+
+    <!-- ========================= -->
+    <!-- CARD INFERIOR -->
+    <!-- ========================= -->
+    <LinearLayout
+        android:id="@+id/contentCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_bottom_card"
+        android:padding="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- GALERÍA -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvGallery"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="1dp"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:orientation="horizontal"
+            tools:listitem="@layout/item_gallery_thumb" />
+
+        <!-- Tarjetas info (como la imagen) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:weightSum="3">
+
+            <include
+                android:id="@+id/cardClase"
+                layout="@layout/item_info_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/cardHabitat"
+                layout="@layout/item_info_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/cardEstado"
+                layout="@layout/item_info_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <!-- Descripción -->
+        <TextView
+            android:id="@+id/tvDescripcion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:maxLines="6"
+            tools:text="Descripción del animal..." />
+
+        <TextView
+            android:id="@+id/tvhabitat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:maxLines="6"
+            tools:text="habitat del animal..." />
+        <!-- Pais de origen dentro del card -->
+        <TextView
+            android:id="@+id/tvPaisOrigen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="—"
+            android:textColor="@color/text_secondary"
+            android:textStyle="italic"
+            tools:text="Costa Rica" />
+        <!-- BOTÓN LEER -->
+        <ImageButton
+            android:id="@+id/btnLeerDescripcion"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_circle_primary"
+            android:src="@drawable/ic_play_circle_black_24dp"
+            android:contentDescription="@string/leer_descripcion"
+            app:tint="@color/white" />
+
+        <!-- ===================================================== -->
+        <!-- ✅ CAMPOS EXTRA (para que NO se rompa tu Kotlin actual) -->
+        <!-- Los dejamos compactos / ocultables si quieres luego -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:id="@+id/extraDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView android:id="@+id/tvReino" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tvFilo" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tvOrden" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tvFamilia" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tvGenero" android:layout_width="match_parent" android:layout_height="wrap_content" />
+
+            <TextView android:id="@+id/tvPaisesExtant" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tvPaisesExtinct" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tvFuenteConservacion" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- RECOMENDACIONES -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvRecomendaciones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:overScrollMode="never"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:orientation="horizontal"
+            tools:listitem="@layout/item_recomendacion_animal" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
