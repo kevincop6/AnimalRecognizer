@@ -10,24 +10,28 @@
     <!-- HERO IMAGE -->
     <ImageView
         android:id="@+id/imageViewAnimal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerInside"
-        android:adjustViewBounds="true"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
         android:background="@android:color/black"
-        android:contentDescription="@string/animal_image" />
+        android:contentDescription="@string/animal_image"
+        tools:src="@drawable/perezoso_animado"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Gradiente para legibilidad de textos encima de la imagen -->
+    <!-- Gradiente inferior -->
     <View
         android:id="@+id/heroGradient"
         android:layout_width="0dp"
         android:layout_height="260dp"
         android:background="@drawable/bg_hero_bottom_gradient"
-        app:layout_constraintBottom_toBottomOf="@id/imageViewAnimal"
-        app:layout_constraintStart_toStartOf="@id/imageViewAnimal"
-        app:layout_constraintEnd_toEndOf="@id/imageViewAnimal" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- BOTÓN FAVORITO -->
+    <!-- FAVORITO -->
     <ImageButton
         android:id="@+id/btnFavorite"
         android:layout_width="50dp"
@@ -40,7 +44,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- (Opcional) BOTÓN BACK -->
+    <!-- BACK -->
     <ImageButton
         android:id="@+id/btnBack"
         android:layout_width="50dp"
@@ -53,10 +57,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- ========================= -->
-    <!-- OVERLAY TEXT (ENCIMA DE LA IMAGEN) -->
-    <!-- Nombre común + Inglés (como tu ejemplo) -->
-    <!-- ========================= -->
+    <!-- TEXTO SOBRE HERO -->
     <LinearLayout
         android:id="@+id/heroTextOverlay"
         android:layout_width="0dp"
@@ -67,10 +68,8 @@
         android:paddingBottom="18dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/contentCard">
+        app:layout_constraintBottom_toTopOf="@id/scrollContent">
 
-
-        <!-- Científico ahora dentro del card -->
         <TextView
             android:id="@+id/tvNombreCientifico"
             android:layout_width="wrap_content"
@@ -79,7 +78,7 @@
             android:textSize="12sp"
             android:textColor="#CCFFFFFF"
             tools:text="Panthera onca" />
-        <!-- Nombre común grande -->
+
         <TextView
             android:id="@+id/tvNombreComun"
             android:layout_width="wrap_content"
@@ -88,9 +87,8 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@android:color/white"
-            tools:text="Bali Island" />
+            tools:text="Jaguar" />
 
-        <!-- Inglés (en lugar del científico) -->
         <TextView
             android:id="@+id/tvNombreIngles"
             android:layout_width="wrap_content"
@@ -102,136 +100,138 @@
     </LinearLayout>
 
     <!-- ========================= -->
-    <!-- CARD INFERIOR -->
+    <!-- SCROLL VIEW (SIN ERRORES) -->
     <!-- ========================= -->
-    <LinearLayout
-        android:id="@+id/contentCard"
+    <ScrollView
+        android:id="@+id/scrollContent"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:fillViewport="true"
         android:orientation="vertical"
-        android:background="@drawable/bg_bottom_card"
-        android:padding="20dp"
+        android:overScrollMode="ifContentScrolls"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- GALERÍA -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvGallery"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:layout_marginTop="1dp"
-            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:orientation="horizontal"
-            tools:listitem="@layout/item_gallery_thumb" />
-
-        <!-- Tarjetas info (como la imagen) -->
         <LinearLayout
+            android:id="@+id/contentCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:weightSum="3">
-
-            <include
-                android:id="@+id/cardClase"
-                layout="@layout/item_info_card"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <include
-                android:id="@+id/cardHabitat"
-                layout="@layout/item_info_card"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <include
-                android:id="@+id/cardEstado"
-                layout="@layout/item_info_card"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <!-- Descripción -->
-        <TextView
-            android:id="@+id/tvDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp"
-            android:maxLines="6"
-            tools:text="Descripción del animal..." />
-
-        <TextView
-            android:id="@+id/tvhabitat"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp"
-            android:maxLines="6"
-            tools:text="habitat del animal..." />
-        <!-- Pais de origen dentro del card -->
-        <TextView
-            android:id="@+id/tvPaisOrigen"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="—"
-            android:textColor="@color/text_secondary"
-            android:textStyle="italic"
-            tools:text="Costa Rica" />
-        <!-- BOTÓN LEER -->
-        <ImageButton
-            android:id="@+id/btnLeerDescripcion"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="end"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_circle_primary"
-            android:src="@drawable/ic_play_circle_black_24dp"
-            android:contentDescription="@string/leer_descripcion"
-            app:tint="@color/white" />
-
-        <!-- ===================================================== -->
-        <!-- ✅ CAMPOS EXTRA (para que NO se rompa tu Kotlin actual) -->
-        <!-- Los dejamos compactos / ocultables si quieres luego -->
-        <!-- ===================================================== -->
-        <LinearLayout
-            android:id="@+id/extraDetails"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:background="@drawable/bg_bottom_card"
+            android:padding="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-            <TextView android:id="@+id/tvReino" android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:id="@+id/tvFilo" android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:id="@+id/tvOrden" android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:id="@+id/tvFamilia" android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:id="@+id/tvGenero" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <!-- GALERÍA -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvGallery"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_marginTop="1dp"
+                android:nestedScrollingEnabled="false"
+                tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:orientation="horizontal"
+                tools:listitem="@layout/item_gallery_thumb" />
 
-            <TextView android:id="@+id/tvPaisesExtant" android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:id="@+id/tvPaisesExtinct" android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:id="@+id/tvFuenteConservacion" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <!-- Tarjetas info -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:weightSum="2">
+
+                <include
+                    android:id="@+id/cardClase"
+                    layout="@layout/item_info_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/cardEstado"
+                    layout="@layout/item_info_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <!-- Pais de origen -->
+            <TextView
+                android:id="@+id/tvPaisOrigen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="—"
+                android:baselineAligned="false"
+                android:textColor="@color/text_secondary"
+                android:textStyle="italic"
+                tools:text="Costa Rica" />
+
+            <!-- Descripción -->
+            <TextView
+                android:id="@+id/tvDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:baselineAligned="false"
+                android:maxLines="6"
+                android:ellipsize="end"
+                android:clickable="true"
+                android:focusable="true"
+                tools:text="Descripción del animal..." />
+
+            <!-- BOTÓN LEER -->
+            <ImageButton
+                android:id="@+id/btnLeerDescripcion"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_circle_primary"
+                android:src="@drawable/ic_play_circle_black_24dp"
+                android:contentDescription="@string/leer_descripcion"
+                app:tint="@color/white" />
+
+            <!-- EXTRA DETAILS -->
+            <LinearLayout
+                android:id="@+id/extraDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView android:id="@+id/tvReino" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvFilo" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvOrden" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvFamilia" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvGenero" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvPaisesExtant" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvPaisesExtinct" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvFuenteConservacion" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvhabitat" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- RECOMENDACIONES -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRecomendaciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:overScrollMode="never"
+                android:nestedScrollingEnabled="false"
+                tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:orientation="horizontal"
+                tools:listitem="@layout/item_recomendacion_animal" />
+
         </LinearLayout>
-
-        <!-- RECOMENDACIONES -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvRecomendaciones"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:overScrollMode="never"
-            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:orientation="horizontal"
-            tools:listitem="@layout/item_recomendacion_animal" />
-    </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

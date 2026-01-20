@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.preference)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.legacy.support.v4)
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.airbnb.android:lottie:5.0.3")

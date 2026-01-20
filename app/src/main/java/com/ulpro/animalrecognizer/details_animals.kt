@@ -2,15 +2,22 @@ package com.ulpro.animalrecognizer
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
@@ -45,12 +52,14 @@ class details_animals : AppCompatActivity() {
     private lateinit var rvGallery: RecyclerView
     private lateinit var galleryAdapter: GalleryThumbAdapter
     private lateinit var gestureDetector: GestureDetectorCompat
+    private lateinit var tvDescripcion: TextView
     private lateinit var textToSpeech: TextToSpeech
 
     private val imageUrlList = mutableListOf<String>()
     private var currentIndex = 0
-
-
+    private var descripcion: String = ""
+    private var descripcionExpandida = false
+    private var descripcionBase = ""
     private lateinit var btnFavorite: ImageButton
     private var isFavorite = false
     private val httpClient by lazy {
@@ -80,9 +89,11 @@ class details_animals : AppCompatActivity() {
         imageView = findViewById(R.id.imageViewAnimal)
         rvGallery = findViewById(R.id.rvGallery)
         btnFavorite = findViewById(R.id.btnFavorite)
+        tvDescripcion = findViewById<TextView>(R.id.tvDescripcion)
         setupGallery()
         setupImageSwipe()
         setupTextToSpeech()
+
 
         // Tap en imagen principal -> fullscreen en índice actual
         imageView.setOnClickListener {
@@ -99,8 +110,73 @@ class details_animals : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { finish() }
         })
+        tvDescripcion.setOnClickListener {
+            toggleDescripcion(descripcion)
+        }
     }
+    private fun toggleDescripcion(textoBase: String) {
+        val tvDescripcion = findViewById<TextView>(R.id.tvDescripcion)
+        val extraDetails = findViewById<LinearLayout>(R.id.extraDetails)
 
+        descripcionExpandida = !descripcionExpandida
+
+        if (descripcionExpandida) {
+            // =========================
+            // ESTADO EXPANDIDO
+            // =========================
+            val textoFinal = "$textoBase  Mostrar menos"
+            val spannable = SpannableString(textoFinal)
+
+            val inicio = textoFinal.lastIndexOf("Mostrar menos")
+
+            spannable.setSpan(
+                ForegroundColorSpan(getColor(R.color.primary)),
+                inicio,
+                textoFinal.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            spannable.setSpan(
+                StyleSpan(Typeface.BOLD),
+                inicio,
+                textoFinal.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            tvDescripcion.text = spannable
+            tvDescripcion.maxLines = Int.MAX_VALUE
+            tvDescripcion.ellipsize = null
+
+            extraDetails.visibility = View.VISIBLE
+
+        } else {
+            // =========================
+            // ESTADO COLAPSADO
+            // =========================
+            val textoFinal = "$textoBase  Mostrar más"
+            val spannable = SpannableString(textoFinal)
+
+            val inicio = textoFinal.lastIndexOf("Mostrar más")
+
+            spannable.setSpan(
+                ForegroundColorSpan(getColor(R.color.primary)),
+                inicio,
+                textoFinal.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            spannable.setSpan(
+                StyleSpan(Typeface.BOLD),
+                inicio,
+                textoFinal.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            tvDescripcion.text = spannable
+            tvDescripcion.maxLines = 6
+            tvDescripcion.ellipsize = TextUtils.TruncateAt.END
+
+            extraDetails.visibility = View.GONE
+        }
+    }
     // =========================================================
     // GALERÍA (MINIATURAS)
     // =========================================================
@@ -287,7 +363,7 @@ class details_animals : AppCompatActivity() {
         findViewById<TextView>(R.id.tvPaisOrigen).text =
             animal.optString("pais_origen", "N/A")
 
-        val descripcion = animal
+        descripcion = animal
             .optJSONObject("descripcion")
             ?.optJSONObject("descripcion")
             ?.optString("texto", "Descripción no disponible")
@@ -295,7 +371,7 @@ class details_animals : AppCompatActivity() {
 
         isFavorite = animal.optBoolean("es_favorito", false)
         updateFavoriteUI()
-        findViewById<TextView>(R.id.tvDescripcion).text = descripcion
+        toggleDescripcion(descripcion)
 
         // ---------- TAXONOMÍA ----------
         animal.optJSONObject("taxonomia")?.let { tax ->
@@ -308,7 +384,7 @@ class details_animals : AppCompatActivity() {
             // Card: Clase
             bindInfoCard(
                 includeRootId = R.id.cardClase,
-                iconRes = R.drawable.ic_info_24,
+                iconRes = R.drawable.ic_category_24dp,
                 valueText = tax.optString("clase", "N/A"),
                 labelText = "Clase"
             )
@@ -327,19 +403,12 @@ class details_animals : AppCompatActivity() {
             findViewById<TextView>(R.id.tvFuenteConservacion).text =
                 dist.optJSONObject("fuente")?.optString("nombre", "N/A") ?: "N/A"
 
-            val habitatTxt =
+            findViewById<TextView>(R.id.tvhabitat).text =
                 dist.optJSONArray("habitat")?.toList()?.joinToString(", ") ?: "N/A"
 
             val estadoTxt =
                 dist.optString("estatus_conservacion", "N/A")
 
-            // Card: Hábitat
-            bindInfoCard(
-                includeRootId = R.id.cardHabitat,
-                iconRes = R.drawable.ic_info_24,
-                valueText = habitatTxt,
-                labelText = "Hábitat"
-            )
 
             // Card: Estado
             bindInfoCard(
