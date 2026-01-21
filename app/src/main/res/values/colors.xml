@@ -40,6 +40,7 @@
     <color name="light_blue_A400">#FF00B0FF</color>
     <color name="black_overlay">#66000000</color> <!-- Color inactivo -->
     <color name="high_contrast_gray2">#606060</color> <!-- Gris oscuro -->
+    <color name="status_bar_color">#1B5E20</color>
     <!-- o -->
     <color name="high_contrast_gray">#A0A0A0</color> <!-- Gris claro -->
 </resources>

@@ -208,4 +208,10 @@
     <string name="nombre_com_n">Nombre común</string>
     <string name="nombre_cient_fico">Nombre científico</string>
     <string name="title_activity_full_screen_gallery">FullScreenGalleryActivity</string>
+    <string name="gion">—</string>
+    <string name="fuente_de_conservaci_n">Fuente de conservación</string>
+    <string name="h_bitat">Hábitat</string>
+    <string name="pa_ses_donde_se_extingui">Países donde se extinguió</string>
+    <string name="pa_ses_donde_existe">Países donde existe</string>
+    <string name="g_nero">Género</string>
 </resources>

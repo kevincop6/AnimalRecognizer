@@ -6,8 +6,10 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.text.Layout
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.StaticLayout
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
@@ -59,7 +61,7 @@ class details_animals : AppCompatActivity() {
     private var currentIndex = 0
     private var descripcion: String = ""
     private var descripcionExpandida = false
-    private var descripcionBase = ""
+    private var descripcionInicializada = false
     private lateinit var btnFavorite: ImageButton
     private var isFavorite = false
     private val httpClient by lazy {
@@ -114,69 +116,146 @@ class details_animals : AppCompatActivity() {
             toggleDescripcion(descripcion)
         }
     }
+
+
     private fun toggleDescripcion(textoBase: String) {
         val tvDescripcion = findViewById<TextView>(R.id.tvDescripcion)
         val extraDetails = findViewById<LinearLayout>(R.id.extraDetails)
 
+        fun buildTextoConBoton(
+            texto: String,
+            boton: String,
+            maxLines: Int
+        ): SpannableString {
+
+            val width = (tvDescripcion.width
+                    - tvDescripcion.paddingStart
+                    - tvDescripcion.paddingEnd).coerceAtLeast(1)
+
+            fun layoutOf(text: CharSequence): StaticLayout =
+                StaticLayout.Builder
+                    .obtain(text, 0, text.length, tvDescripcion.paint, width)
+                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                    .setLineSpacing(
+                        tvDescripcion.lineSpacingExtra,
+                        tvDescripcion.lineSpacingMultiplier
+                    )
+                    .setIncludePad(tvDescripcion.includeFontPadding)
+                    .build()
+
+            val fullText = "$texto  $boton"
+            if (layoutOf(fullText).lineCount <= maxLines) {
+                return SpannableString(fullText)
+            }
+
+            var low = 0
+            var high = texto.length
+            var best = 0
+
+            while (low <= high) {
+                val mid = (low + high) / 2
+                val candidate = texto.substring(0, mid).trimEnd() + "…  $boton"
+                if (layoutOf(candidate).lineCount <= maxLines) {
+                    best = mid
+                    low = mid + 1
+                } else {
+                    high = mid - 1
+                }
+            }
+
+            return SpannableString(
+                texto.substring(0, best).trimEnd() + "…  $boton"
+            )
+        }
+
+        // =========================
+        // PRIMERA EJECUCIÓN → SIEMPRE COLAPSADO
+        // =========================
+        if (!descripcionInicializada) {
+            descripcionInicializada = true
+            descripcionExpandida = false
+
+            tvDescripcion.post {
+                val spannable = buildTextoConBoton(
+                    textoBase,
+                    "Mostrar más",
+                    6
+                )
+
+                val inicio = spannable.lastIndexOf("Mostrar más")
+                spannable.setSpan(
+                    ForegroundColorSpan(getColor(R.color.primary)),
+                    inicio, spannable.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                spannable.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    inicio, spannable.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+
+                tvDescripcion.text = spannable
+                tvDescripcion.maxLines = Int.MAX_VALUE
+                tvDescripcion.ellipsize = null
+                extraDetails.visibility = View.GONE
+            }
+            return
+        }
+
+        // =========================
+        // TOGGLE REAL
+        // =========================
         descripcionExpandida = !descripcionExpandida
 
         if (descripcionExpandida) {
-            // =========================
-            // ESTADO EXPANDIDO
-            // =========================
             val textoFinal = "$textoBase  Mostrar menos"
             val spannable = SpannableString(textoFinal)
 
             val inicio = textoFinal.lastIndexOf("Mostrar menos")
-
             spannable.setSpan(
                 ForegroundColorSpan(getColor(R.color.primary)),
-                inicio,
-                textoFinal.length,
+                inicio, spannable.length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
             spannable.setSpan(
                 StyleSpan(Typeface.BOLD),
-                inicio,
-                textoFinal.length,
+                inicio, spannable.length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
 
             tvDescripcion.text = spannable
             tvDescripcion.maxLines = Int.MAX_VALUE
             tvDescripcion.ellipsize = null
-
             extraDetails.visibility = View.VISIBLE
 
         } else {
-            // =========================
-            // ESTADO COLAPSADO
-            // =========================
-            val textoFinal = "$textoBase  Mostrar más"
-            val spannable = SpannableString(textoFinal)
+            tvDescripcion.post {
+                val spannable = buildTextoConBoton(
+                    textoBase,
+                    "Mostrar más",
+                    6
+                )
 
-            val inicio = textoFinal.lastIndexOf("Mostrar más")
+                val inicio = spannable.lastIndexOf("Mostrar más")
+                spannable.setSpan(
+                    ForegroundColorSpan(getColor(R.color.primary)),
+                    inicio, spannable.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                spannable.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    inicio, spannable.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
 
-            spannable.setSpan(
-                ForegroundColorSpan(getColor(R.color.primary)),
-                inicio,
-                textoFinal.length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-            spannable.setSpan(
-                StyleSpan(Typeface.BOLD),
-                inicio,
-                textoFinal.length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-
-            tvDescripcion.text = spannable
-            tvDescripcion.maxLines = 6
-            tvDescripcion.ellipsize = TextUtils.TruncateAt.END
-
-            extraDetails.visibility = View.GONE
+                tvDescripcion.text = spannable
+                tvDescripcion.maxLines = Int.MAX_VALUE
+                tvDescripcion.ellipsize = null
+                extraDetails.visibility = View.GONE
+            }
         }
     }
+
     // =========================================================
     // GALERÍA (MINIATURAS)
     // =========================================================

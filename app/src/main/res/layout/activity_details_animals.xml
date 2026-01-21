@@ -74,7 +74,7 @@
             android:id="@+id/tvNombreCientifico"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="—"
+            android:text="@string/gion"
             android:textSize="12sp"
             android:textColor="#CCFFFFFF"
             tools:text="Panthera onca" />
@@ -83,7 +83,7 @@
             android:id="@+id/tvNombreComun"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="—"
+            android:text="@string/gion"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@android:color/white"
@@ -93,7 +93,7 @@
             android:id="@+id/tvNombreIngles"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="—"
+            android:text="@string/gion"
             android:textSize="14sp"
             android:textColor="#D9FFFFFF"
             tools:text="English name" />
@@ -108,7 +108,7 @@
         android:layout_height="wrap_content"
         android:fillViewport="true"
         android:orientation="vertical"
-        android:overScrollMode="ifContentScrolls"
+        android:overScrollMode="always"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -130,6 +130,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
                 android:layout_marginTop="1dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:nestedScrollingEnabled="false"
                 tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:orientation="horizontal"
@@ -143,6 +145,8 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="16dp"
                 android:gravity="center"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:weightSum="2">
 
                 <include
@@ -161,62 +165,150 @@
             </LinearLayout>
 
             <!-- Pais de origen -->
-            <TextView
-                android:id="@+id/tvPaisOrigen"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="—"
-                android:baselineAligned="false"
-                android:textColor="@color/text_secondary"
-                android:textStyle="italic"
-                tools:text="Costa Rica" />
-
-            <!-- Descripción -->
-            <TextView
-                android:id="@+id/tvDescripcion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:baselineAligned="false"
-                android:maxLines="6"
-                android:ellipsize="end"
-                android:clickable="true"
-                android:focusable="true"
-                tools:text="Descripción del animal..." />
-
-            <!-- BOTÓN LEER -->
-            <ImageButton
-                android:id="@+id/btnLeerDescripcion"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="end"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_circle_primary"
-                android:src="@drawable/ic_play_circle_black_24dp"
-                android:contentDescription="@string/leer_descripcion"
-                app:tint="@color/white" />
-
-            <!-- EXTRA DETAILS -->
+            <!-- CONTENEDOR DE TEXTO (canal de lectura) -->
             <LinearLayout
-                android:id="@+id/extraDetails"
+                android:id="@+id/textContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
                 android:orientation="vertical"
-                android:visibility="gone">
+                android:paddingStart="8dp"
+                android:layout_marginTop="5dp"
+                android:paddingEnd="8dp">
 
-                <TextView android:id="@+id/tvReino" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvFilo" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvOrden" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvFamilia" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvGenero" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvPaisesExtant" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvPaisesExtinct" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvFuenteConservacion" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                <TextView android:id="@+id/tvhabitat" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <!-- Pais de origen -->
+                <TextView
+                    android:id="@+id/tvPaisOrigen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/gion"
+                    android:textColor="@color/text_secondary"
+                    android:textStyle="italic"
+                    tools:text="Costa Rica" />
+
+                <!-- Descripción -->
+                <TextView
+                    android:id="@+id/tvDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:minHeight="48dp"
+                    android:gravity="center_vertical"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:maxLines="6"
+                    android:ellipsize="end"
+                    android:clickable="true"
+                    android:focusable="true"
+                    tools:text="Descripción del animal..." />
+
+                <!-- BOTÓN LEER -->
+                <ImageButton
+                    android:id="@+id/btnLeerDescripcion"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_circle_primary"
+                    android:src="@drawable/ic_play_circle_black_24dp"
+                    android:contentDescription="@string/leer_descripcion"
+                    app:tint="@color/accent" />
+
+                <!-- EXTRA DETAILS -->
+                <LinearLayout
+                    android:id="@+id/extraDetails"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- REINO -->
+                    <TextView
+                        android:text="@string/reino"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvReino"
+                        style="@style/InfoValue" />
+
+                    <!-- FILO -->
+                    <TextView
+                        android:text="@string/filo"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvFilo"
+                        style="@style/InfoValue" />
+
+                    <!-- ORDEN -->
+                    <TextView
+                        android:text="@string/orden"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvOrden"
+                        style="@style/InfoValue" />
+
+                    <!-- FAMILIA -->
+                    <TextView
+                        android:text="@string/familia"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvFamilia"
+                        style="@style/InfoValue" />
+
+                    <!-- GÉNERO -->
+                    <TextView
+                        android:text="@string/g_nero"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvGenero"
+                        style="@style/InfoValue" />
+
+                    <!-- PAÍSES (EXTANT) -->
+                    <TextView
+                        android:text="@string/pa_ses_donde_existe"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvPaisesExtant"
+                        style="@style/InfoValue" />
+
+                    <!-- PAÍSES (EXTINCT) -->
+                    <TextView
+                        android:text="@string/pa_ses_donde_se_extingui"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvPaisesExtinct"
+                        style="@style/InfoValue" />
+
+                    <!-- HÁBITAT -->
+                    <TextView
+                        android:text="@string/h_bitat"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvhabitat"
+                        style="@style/InfoValue" />
+
+                    <!-- FUENTE -->
+                    <TextView
+                        android:text="@string/fuente_de_conservaci_n"
+                        style="@style/InfoLabel" />
+
+                    <TextView
+                        android:id="@+id/tvFuenteConservacion"
+                        style="@style/InfoValue" />
+
+                </LinearLayout>
+
+
             </LinearLayout>
 
             <!-- RECOMENDACIONES -->
@@ -226,6 +318,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:overScrollMode="never"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:nestedScrollingEnabled="false"
                 tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:orientation="horizontal"

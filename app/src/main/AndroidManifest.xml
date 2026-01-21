@@ -62,7 +62,7 @@
             android:theme="@style/Theme.AnimalRecognizer" />
         <activity
             android:name=".details_animals"
-            android:theme="@style/Theme.AnimalRecognizer"
+            android:theme="@style/Theme.AnimalRecognizer.NoFullscreen"
             android:exported="false" />
         <activity
             android:name=".ActivityCompareImages"
