@@ -214,4 +214,6 @@
     <string name="pa_ses_donde_se_extingui">Países donde se extinguió</string>
     <string name="pa_ses_donde_existe">Países donde existe</string>
     <string name="g_nero">Género</string>
+    <string name="ver_comentarios">Ver comentarios</string>
+    <string name="imagen_usuario">imagen usuario</string>
 </resources>

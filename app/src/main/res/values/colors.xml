@@ -43,4 +43,10 @@
     <color name="status_bar_color">#1B5E20</color>
     <!-- o -->
     <color name="high_contrast_gray">#A0A0A0</color> <!-- Gris claro -->
+
+    <color name="gray_light">#E9E9E9</color>
+    <color name="divider">#F0F0F0</color>
+
+    <!-- Estado -->
+    <color name="like_red">#E53935</color>
 </resources>

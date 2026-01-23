@@ -1,120 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="@color/background">
 
-    <LinearLayout
+    <!-- HEADER -->
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="56dp"
+        android:paddingHorizontal="16dp"
+        android:gravity="center_vertical">
 
-        <!-- Bienvenida -->
         <TextView
-            android:id="@+id/bienvenidoTextView"
+            android:id="@+id/tvAppName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bienvenido Usuario"
-            android:textSize="26sp"
-            android:textColor="@color/text_primary"
-            android:textStyle="bold" />
-
-        <!-- Buscador -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_container_soft"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="20dp">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@android:drawable/ic_menu_search"
-                app:tint="@color/text_secondary" />
-
-            <EditText
-                android:id="@+id/searchView_avistamientos"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="@string/buscar"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_secondary"
-                android:focusable="false"
-                android:clickable="true"
-                android:minHeight="48dp"
-                android:importantForAccessibility="yes" />
-        </LinearLayout>
-
-        <!-- Registros -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Registros"
-            android:textSize="20sp"
+            android:text="@string/app_name"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginTop="28dp"
-            android:layout_marginBottom="12dp" />
+            android:fontFamily="@font/bilbo"
+            android:textColor="@color/text_primary" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView_animals"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:paddingEnd="8dp" />
+        <!-- Opcional: icono cámara -->
+        <ImageView
+            android:id="@+id/btnCamera"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/ic_notifications_24dp"
+            app:tint="@color/text_primary" />
 
-        <!-- Reconocer animales -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:background="@drawable/bg_container_soft"
-            android:orientation="vertical"
-            android:padding="20dp">
+    </RelativeLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Reconocer animales"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="12dp" />
+    <!-- FEED -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFeed"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"/>
 
-            <ImageView
-                android:id="@+id/selectedImageView"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="centerCrop"
-                android:clipToOutline="true"
-                android:background="@drawable/bg_image_rounded"
-                android:src="@drawable/perezoso_animado" />
-
-            <!-- Botón principal -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/recognitionMenuButton"
-                android:layout_width="wrap_content"
-                android:layout_height="56dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="20dp"
-                android:paddingHorizontal="36dp"
-                android:text="Reconocer animal"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:background="@drawable/btn_recognize"
-                android:drawableEnd="@drawable/ic_expand_more_24px"
-                android:drawablePadding="8dp" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>
