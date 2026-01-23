@@ -77,31 +77,41 @@ class details_animals : AppCompatActivity() {
     // =========================================================
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        // ❌ NO usar edge-to-edge en esta pantalla
+        // enableEdgeToEdge()
+
         setContentView(R.layout.activity_details_animals)
 
+        // ✅ Solo respetamos el inset inferior (gestos / nav bar)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.contentCard)) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(0, 0, 0, bars.bottom)
+            v.setPadding(
+                v.paddingLeft,
+                v.paddingTop,
+                v.paddingRight,
+                bars.bottom
+            )
             insets
         }
 
-
-
+        // ---------- Views ----------
         imageView = findViewById(R.id.imageViewAnimal)
         rvGallery = findViewById(R.id.rvGallery)
         btnFavorite = findViewById(R.id.btnFavorite)
-        tvDescripcion = findViewById<TextView>(R.id.tvDescripcion)
+        tvDescripcion = findViewById(R.id.tvDescripcion)
+
+        // ---------- Setup ----------
         setupGallery()
         setupImageSwipe()
         setupTextToSpeech()
-
 
         // Tap en imagen principal -> fullscreen en índice actual
         imageView.setOnClickListener {
             openFullScreenGallery(currentIndex)
         }
 
+        // ---------- Data ----------
         val animalId = intent.getIntExtra("animalId", -1)
         if (animalId != -1) {
             fetchAnimalDetails(animalId)
@@ -109,13 +119,19 @@ class details_animals : AppCompatActivity() {
             showErrorDialog("ID de animal inválido")
         }
 
+        // ---------- Back ----------
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() { finish() }
+            override fun handleOnBackPressed() {
+                finish()
+            }
         })
+
+        // ---------- Descripción expandible ----------
         tvDescripcion.setOnClickListener {
             toggleDescripcion(descripcion)
         }
     }
+
 
 
     private fun toggleDescripcion(textoBase: String) {
