@@ -17,7 +17,7 @@ class FeedAdapter(
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val imgUser: ImageView = v.findViewById(R.id.imgUser)
         val tvUser: TextView = v.findViewById(R.id.tvUser)
-        val btnFollow: ImageButton = v.findViewById(R.id.btn_follow)
+        val btnFollow: ImageButton = v.findViewById(R.id.btnfollow)
 
         val pagerImages: ViewPager2 = v.findViewById(R.id.pagerImages)
         val tvImageCounter: TextView = v.findViewById(R.id.tvImageCounter)
