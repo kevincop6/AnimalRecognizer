@@ -10,6 +10,7 @@ object FeedParser {
         for (i in 0 until array.length()) {
             val o = array.getJSONObject(i)
 
+            // ---------- MEDIA ----------
             val mediaArr = o.getJSONArray("media")
             val mediaList = mutableListOf<FeedMedia>()
             for (j in 0 until mediaArr.length()) {
@@ -22,15 +23,33 @@ object FeedParser {
                 )
             }
 
+            // ---------- USUARIO ----------
+            val u = o.getJSONObject("usuario")
+            val user = FeedUser(
+                id = u.getInt("id"),
+                nombre_usuario = u.getString("nombre_usuario"),
+                nombre_completo = u.getString("nombre_completo"),
+                foto = u.optString("foto", null),
+                siguiendo = u.getBoolean("siguiendo")
+            )
+
+            // ---------- ANIMAL ----------
+            val a = o.getJSONObject("animal")
+            val animal = FeedAnimal(
+                id = a.getInt("id"),
+                nombre_comun = a.getString("nombre_comun"),
+                nombre_cientifico = a.getString("nombre_cientifico")
+            )
+
+            // ---------- POST ----------
             list.add(
                 FeedPost(
                     avistamiento_id = o.getInt("avistamiento_id"),
+                    titulo = o.getString("titulo"),
                     descripcion = o.getString("descripcion"),
                     fecha = o.getString("fecha"),
-                    usuario = FeedUser(
-                        nombre_usuario = o.getJSONObject("usuario").getString("nombre_usuario"),
-                        foto = o.getJSONObject("usuario").optString("foto", null)
-                    ),
+                    usuario = user,
+                    animal = animal,
                     media = mediaList,
                     likes = FeedLikes(
                         total = o.getJSONObject("likes").getInt("total"),
@@ -38,10 +57,13 @@ object FeedParser {
                     ),
                     comentarios = FeedComments(
                         total = o.getJSONObject("comentarios").getInt("total")
-                    )
+                    ),
+                    es_recomendado = o.getBoolean("es_recomendado"),
+                    ya_visto = o.getBoolean("ya_visto")
                 )
             )
         }
+
         return list
     }
 }

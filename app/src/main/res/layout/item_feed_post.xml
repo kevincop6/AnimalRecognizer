@@ -22,34 +22,44 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/imgUser"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:clipToOutline="true"
-                android:background="@drawable/bg_avatar_circle"
-                android:contentDescription="@string/imagen_usuario"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_user_placeholder" />
-
-            <TextView
-                android:id="@+id/tvUser"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                tools:text="usuario"
-                android:clipToOutline="true"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/btnOptions"
+                <ImageView
+                    android:id="@+id/imgUser"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_avatar_circle"
+                    android:clipToOutline="true"
+                    android:contentDescription="@string/imagen_usuario"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_user_placeholder" />
+
+                <TextView
+                    android:id="@+id/tvUser"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:padding="12dp"
+                    android:clipToOutline="true"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="usuario" />
+
+            </LinearLayout>
+            <ImageButton
+                android:id="@+id/btnfollow"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_more"
-                app:tint="@color/text_secondary" />
+                android:layout_marginStart="5dp"
+                android:contentDescription="@string/siguiendo"
+                android:src="@drawable/ic_follow_check_24dp"
+                app:tint="@color/text_secondary"/>
         </LinearLayout>
 
         <!-- ================= IMAGEN ================= -->

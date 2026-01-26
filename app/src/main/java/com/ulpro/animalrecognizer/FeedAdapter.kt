@@ -3,6 +3,7 @@ package com.ulpro.animalrecognizer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,8 @@ class FeedAdapter(
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val imgUser: ImageView = v.findViewById(R.id.imgUser)
         val tvUser: TextView = v.findViewById(R.id.tvUser)
+        val btnFollow: ImageButton = v.findViewById(R.id.btn_follow)
+
         val pagerImages: ViewPager2 = v.findViewById(R.id.pagerImages)
         val tvImageCounter: TextView = v.findViewById(R.id.tvImageCounter)
         val tvLikes: TextView = v.findViewById(R.id.tvLikes)
@@ -36,10 +39,21 @@ class FeedAdapter(
 
         // ---------- USER ----------
         h.tvUser.text = post.usuario.nombre_usuario
+
         Glide.with(h.itemView)
             .load(post.usuario.foto)
             .placeholder(R.drawable.ic_user_placeholder)
             .into(h.imgUser)
+
+        // ---------- FOLLOW ICON ----------
+        if (post.usuario.siguiendo) {
+            h.btnFollow.setImageResource(R.drawable.ic_follow_check_24dp)
+        } else {
+            h.btnFollow.setImageResource(R.drawable.ic_follow_add_24dp)
+        }
+
+        // (Opcional) evitar clic si es el mismo usuario
+        h.btnFollow.isEnabled = true
 
         // ---------- TEXT ----------
         val likesText = NumberFormatter.compact(post.likes.total)
@@ -47,12 +61,13 @@ class FeedAdapter(
 
         h.tvLikes.text = "$likesText Me gusta"
         h.tvComments.text = "Ver $commentsText comentarios"
+        h.tvDescription.text = post.descripcion
 
         // ---------- IMAGES ----------
         val totalImages = post.media.size
         h.pagerImages.adapter = FeedImagePagerAdapter(post.media)
 
-        // Limpiar callback previo (MUY IMPORTANTE)
+        // Limpiar callback previo
         h.pageCallback?.let {
             h.pagerImages.unregisterOnPageChangeCallback(it)
         }
@@ -69,7 +84,6 @@ class FeedAdapter(
 
             h.pagerImages.registerOnPageChangeCallback(callback)
             h.pageCallback = callback
-
         } else {
             h.tvImageCounter.visibility = View.GONE
             h.pageCallback = null
