@@ -1,9 +1,11 @@
 package com.ulpro.animalrecognizer
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,6 +24,8 @@ class AvistamientosFragment : Fragment() {
     private var isLoading = false
     private var hasMore = true
 
+    private lateinit var btnSearch: ImageButton
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -32,12 +36,20 @@ class AvistamientosFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         ServerConfig.initialize(requireContext())
-
+        btnSearch = view.findViewById(R.id.btnSearch)
         rvFeed = view.findViewById(R.id.rvFeed)
         rvFeed.layoutManager = LinearLayoutManager(requireContext())
         feedAdapter = FeedAdapter(mutableListOf())
         rvFeed.adapter = feedAdapter
-
+        btnSearch.setOnClickListener {
+            startActivity(
+                Intent(requireContext(), SearchActivity::class.java)
+            )
+            requireActivity().overridePendingTransition(
+                R.anim.slide_up,
+                R.anim.fade_out
+            )
+        }
         loadFeed()
 
         rvFeed.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -47,6 +59,7 @@ class AvistamientosFragment : Fragment() {
                 }
             }
         })
+
     }
 
     private fun loadFeed() {

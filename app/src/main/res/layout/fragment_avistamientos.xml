@@ -6,33 +6,62 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- HEADER -->
-    <RelativeLayout
+    <!-- HEADER CON FONDO REDONDEADO -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:paddingHorizontal="16dp"
-        android:gravity="center_vertical">
+        android:layout_height="wrap_content"
+        android:elevation="8dp"
+        android:outlineProvider="bounds">
 
-        <TextView
-            android:id="@+id/tvAppName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/bilbo"
-            android:textColor="@color/text_primary" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:paddingHorizontal="16dp"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_header_rounded">
 
-        <!-- Opcional: icono cámara -->
-        <ImageView
-            android:id="@+id/btnCamera"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_alignParentEnd="true"
-            android:src="@drawable/ic_notifications_24dp"
-            app:tint="@color/text_primary" />
+            <TextView
+                android:id="@+id/tvAppName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/bilbo"
+                android:textColor="@color/text_primary" />
 
-    </RelativeLayout>
+            <!-- BOTÓN BÚSQUEDA -->
+            <ImageButton
+                android:id="@+id/btnSearch"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="40dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_search"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/buscar"
+                app:tint="@color/text_primary" />
+            <!-- BOTÓN NOTIFICACIONES -->
+            <ImageButton
+                android:id="@+id/btnnotification"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:padding="12dp"
+                android:src="@drawable/ic_notifications_24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="notification"
+                app:tint="@color/text_primary" />
+
+        </RelativeLayout>
+    </FrameLayout>
+
+    <!-- LÍNEA SEPARADORA -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider" />
 
     <!-- FEED -->
     <androidx.recyclerview.widget.RecyclerView
@@ -41,6 +70,6 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="16dp"/>
+        android:paddingBottom="16dp" />
 
 </LinearLayout>
