@@ -13,31 +13,44 @@ class RecommendationAdapter(
     private val onItemClick: (Int) -> Unit
 ) : RecyclerView.Adapter<RecommendationAdapter.ViewHolder>() {
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val imageView: ImageView = view.findViewById(R.id.imageView)
-        val textViewName: TextView = view.findViewById(R.id.textViewName)
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val image: ImageView = view.findViewById(R.id.imgRecomendacion)
+        val name: TextView = view.findViewById(R.id.tvNombreRecomendacion)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_recommendation, parent, false)
+            .inflate(R.layout.item_recomendacion_animal, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.textViewName.text = item.name
 
-        Glide.with(holder.itemView)
+        holder.name.text = item.name
+
+        Glide.with(holder.itemView.context)
             .load(item.imageUrl)
-            .into(holder.imageView)
+            .placeholder(R.drawable.placeholder_image)
+            .error(R.drawable.placeholder_image)
+            .into(holder.image)
 
-        holder.itemView.setOnClickListener { onItemClick(item.id) }
+        holder.itemView.setOnClickListener {
+            onItemClick(item.id)
+        }
     }
 
     override fun getItemCount(): Int = items.size
 }
 
+/**
+ * Modelo alineado EXACTAMENTE con:
+ * {
+ *   "id": 11,
+ *   "nombre": "Leptodeira ornata",
+ *   "imagen_principal": "https://..."
+ * }
+ */
 data class RecommendationItem(
     val id: Int,
     val name: String,

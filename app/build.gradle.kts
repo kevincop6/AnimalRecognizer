@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation ("androidx.camera:camera-camera2:1.5.2")
     implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
@@ -73,6 +74,7 @@ dependencies {
     implementation(libs.androidx.preference)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.legacy.support.v4)
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.airbnb.android:lottie:5.0.3")
@@ -97,5 +99,6 @@ dependencies {
 
     // Se usa para encriptar datos
     implementation("androidx.security:security-crypto:1.1.0")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
 
 }

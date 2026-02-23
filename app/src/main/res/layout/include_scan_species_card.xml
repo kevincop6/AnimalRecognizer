@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/speciesCard"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:layout_gravity="bottom"
+    android:layout_margin="16dp"
+    android:background="@drawable/bg_species_card"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:elevation="10dp"
+    android:visibility="gone">
+
+    <ImageView
+        android:id="@+id/imgAnimal"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_circle"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/animal"
+        android:src="@drawable/ic_animal_placeholder" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/txtLabelSpecies"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/species"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/txtAnimalName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/suspencion"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btnOpenDetails"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_circle_dark"
+        android:contentDescription="@string/ver_detalles"
+        android:scaleType="center"
+        android:src="@drawable/ic_add_24dp"
+        android:padding="4dp"
+        app:tint="@color/white" />
+</LinearLayout>

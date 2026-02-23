@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <!-- ===================== -->
+    <!-- CÁMARA -->
+    <!-- ===================== -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- ===================== -->
+    <!-- BOTÓN CERRAR -->
+    <!-- ===================== -->
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="14dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_close_24dp"
+        android:scaleType="center"
+        android:contentDescription="@string/cerrar"
+        app:tint="@color/white" />
+
+    <!-- ===================== -->
+    <!-- CUADRO DE ENFOQUE -->
+    <!-- ===================== -->
+    <FrameLayout
+        android:id="@+id/focusBox"
+        android:layout_width="270dp"
+        android:layout_height="270dp"
+        android:layout_gravity="center">
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:background="@drawable/scan_corner_tl" />
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="end"
+            android:background="@drawable/scan_corner_tr" />
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/scan_corner_bl" />
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/scan_corner_br" />
+    </FrameLayout>
+
+    <!-- ===================== -->
+    <!-- PUNTO + LÍNEA -->
+    <!-- ===================== -->
+    <View
+        android:id="@+id/focusDot"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_gravity="center"
+        android:background="@drawable/scan_dot" />
+
+    <View
+        android:id="@+id/focusDottedLine"
+        android:layout_width="3dp"
+        android:layout_height="220dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/scan_dotted_line" />
+
+    <!-- ===================== -->
+    <!-- TARJETA DE ESPECIE (LOCAL / OFFLINE) -->
+    <!-- ===================== -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom">
+
+        <include layout="@layout/include_scan_species_card"/>
+    </FrameLayout>
+
+    <!-- ===================== -->
+    <!-- CONTROLES DE CÁMARA -->
+    <!-- ===================== -->
+    <FrameLayout
+        android:id="@+id/cameraControls"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="bottom"
+        android:background="@android:color/transparent">
+
+        <!-- Obturador -->
+        <ImageButton
+            android:id="@+id/btnShutter"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_shutter_outer"
+            android:contentDescription="@string/captura"
+            android:scaleType="center"
+            android:padding="6dp" />
+
+        <View
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_shutter_inner" />
+
+        <!-- Galería -->
+        <ImageButton
+            android:id="@+id/btnGallery"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="24dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_gallery_24dp"
+            android:scaleType="centerInside"
+            android:padding="12dp"
+            android:contentDescription="@string/galeria"
+            app:tint="@color/white" />
+    </FrameLayout>
+
+</FrameLayout>

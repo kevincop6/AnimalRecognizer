@@ -9,14 +9,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
 import cn.pedant.SweetAlert.SweetAlertDialog
 
-class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackChangedListener {
+class MainNavigationActivity : AppCompatActivity(),
+    FragmentManager.OnBackStackChangedListener {
 
     private lateinit var bottomNavHelper: BottomNavigationHelper
 
     private val sessionCheckHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val sessionCheckIntervalMs = 60_000L
 
-    private var uiReady = false // ✅ evita arrancar el loop antes de setupUi()
+    private var uiReady = false
 
     private val sessionCheckRunnable = object : Runnable {
         override fun run() {
@@ -31,23 +32,26 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
                 return
             }
 
-            ServerConnection(this@MainNavigationActivity).verifySession(token) { result ->
-                when (result) {
-                    is VerifyResult.Active -> {
-                        result.paquetePredeterminado?.let { UserPrefs.savePaquete(this@MainNavigationActivity, it) }
-                        sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
-                    }
+            ServerConnection(this@MainNavigationActivity)
+                .verifySession(token) { result ->
+                    when (result) {
+                        is VerifyResult.Active -> {
+                            result.paquetePredeterminado?.let {
+                                UserPrefs.savePaquete(this@MainNavigationActivity, it)
+                            }
+                            sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                        }
 
-                    is VerifyResult.Inactive,
-                    is VerifyResult.ServerError -> {
-                        logoutAndRedirect()
-                    }
+                        is VerifyResult.Inactive,
+                        is VerifyResult.ServerError -> {
+                            logoutAndRedirect()
+                        }
 
-                    is VerifyResult.NetworkError -> {
-                        sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                        is VerifyResult.NetworkError -> {
+                            sessionCheckHandler.postDelayed(this, sessionCheckIntervalMs)
+                        }
                     }
                 }
-            }
         }
     }
 
@@ -67,7 +71,9 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
             ServerConnection(this).verifySession(token) { result ->
                 when (result) {
                     is VerifyResult.Active -> {
-                        result.paquetePredeterminado?.let { UserPrefs.savePaquete(this, it) }
+                        result.paquetePredeterminado?.let {
+                            UserPrefs.savePaquete(this, it)
+                        }
                         setupUi(savedInstanceState)
                     }
 
@@ -77,7 +83,7 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
                     }
 
                     is VerifyResult.NetworkError -> {
-                        setupUi(savedInstanceState) // permitir “offline”
+                        setupUi(savedInstanceState)
                     }
                 }
             }
@@ -88,7 +94,6 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
 
     override fun onStart() {
         super.onStart()
-        // ✅ solo si la UI ya está lista
         if (uiReady) {
             sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
             sessionCheckHandler.post(sessionCheckRunnable)
@@ -107,34 +112,40 @@ class MainNavigationActivity : AppCompatActivity(), FragmentManager.OnBackStackC
         supportFragmentManager.addOnBackStackChangedListener(this)
 
         if (savedInstanceState == null) {
-            val fragmentToOpen = intent.getStringExtra("open_fragment")
-            if (fragmentToOpen == "SettingsFragment") {
-                bottomNavHelper.switchFragment(SettingsFragment(), "SETTINGS_FRAGMENT")
-            } else {
-                bottomNavHelper.showInitialFragment()
-            }
+            // 🔹 siempre arrancamos en Home (Avistamientos)
+            bottomNavHelper.showInitialFragment()
         }
 
-        uiReady = true // ✅ marcar listo
+        uiReady = true
         sessionCheckHandler.removeCallbacks(sessionCheckRunnable)
-        sessionCheckHandler.post(sessionCheckRunnable) // ✅ arrancar el loop aquí (seguro)
+        sessionCheckHandler.post(sessionCheckRunnable)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (supportFragmentManager.backStackEntryCount > 0) {
-                    supportFragmentManager.popBackStack()
-                } else {
-                    SweetAlertDialog(this@MainNavigationActivity, SweetAlertDialog.WARNING_TYPE)
-                        .setTitleText("¿Deseas salir?")
-                        .setContentText("La aplicación se cerrará.")
-                        .setConfirmText("Sí")
-                        .setCancelText("No")
-                        .setConfirmClickListener { finishAffinity() }
-                        .setCancelClickListener { it.dismissWithAnimation() }
-                        .show()
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (supportFragmentManager.backStackEntryCount > 0) {
+                        supportFragmentManager.popBackStack()
+                    } else {
+                        SweetAlertDialog(
+                            this@MainNavigationActivity,
+                            SweetAlertDialog.WARNING_TYPE
+                        )
+                            .setTitleText("¿Deseas salir?")
+                            .setContentText("La aplicación se cerrará.")
+                            .setConfirmText("Sí")
+                            .setCancelText("No")
+                            .setConfirmClickListener {
+                                finishAffinity()
+                            }
+                            .setCancelClickListener {
+                                it.dismissWithAnimation()
+                            }
+                            .show()
+                    }
                 }
             }
-        })
+        )
     }
 
     override fun onBackStackChanged() {

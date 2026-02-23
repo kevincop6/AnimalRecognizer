@@ -57,7 +57,7 @@ class UsuariosFragment : Fragment() {
 
         // Click en usuario
         adapter.setOnItemClickListener { userId ->
-            val intent = Intent(requireContext(), MainActivity::class.java)
+            val intent = Intent(requireContext(), ProfileActivity::class.java)
             intent.putExtra("open_profile_user_id", userId)
             startActivity(intent)
         }

@@ -4,87 +4,208 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/background">
 
-    <!-- FOTO PERFIL -->
+    <!-- LOGOUT (SOLO ICONO, ESQUINA SUPERIOR DERECHA) -->
+    <ImageButton
+        android:id="@+id/logOutButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cerrar_sesion"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_logout_24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/primary_dark" />
+
+    <!-- FOTO PERFIL (CENTRADA) -->
     <ImageView
         android:id="@+id/profile_image"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="92dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="48dp"
+        android:contentDescription="@string/foto_perfil"
         android:background="@drawable/circular_image"
         android:clipToOutline="true"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_default_profile"
+        android:foreground="@drawable/profile_image_overlay"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- NOMBRE -->
-    <TextView
-        android:id="@+id/user_name"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        android:textColor="@color/dark_navy"
+    <!-- SETTINGS (IZQUIERDA DE LA FOTO) -->
+    <ImageButton
+        android:id="@+id/btn_settings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/Configuracion"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_settings_black_24dp"
+        app:layout_constraintEnd_toStartOf="@id/profile_image"
+        app:layout_constraintTop_toTopOf="@id/profile_image"
+        app:layout_constraintBottom_toBottomOf="@id/profile_image"
+        app:tint="@color/primary_dark" />
+
+    <!-- EDIT (DERECHA DE LA FOTO) -->
+    <ImageButton
+        android:id="@+id/btn_edit"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/editar"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_edit_24dp"
         app:layout_constraintStart_toEndOf="@id/profile_image"
         app:layout_constraintTop_toTopOf="@id/profile_image"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@id/profile_image"
+        app:tint="@color/primary_dark" />
 
     <!-- USUARIO -->
     <TextView
-        android:id="@+id/user_occupation"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textSize="14sp"
-        android:textColor="@color/dark_teal"
-        app:layout_constraintStart_toEndOf="@id/profile_image"
-        app:layout_constraintTop_toBottomOf="@id/user_name"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- LIKES -->
-    <TextView
-        android:id="@+id/user_likes"
+        android:id="@+id/user_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="❤️ 0 likes"
-        android:textSize="13sp"
-        android:textColor="@color/dark_gray"
-        app:layout_constraintStart_toEndOf="@id/profile_image"
-        app:layout_constraintTop_toBottomOf="@id/user_occupation" />
+        android:layout_marginTop="12dp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        app:layout_constraintTop_toBottomOf="@id/profile_image"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- NOMBRE COMPLETO -->
+    <TextView
+        android:id="@+id/user_occupation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        app:layout_constraintTop_toBottomOf="@id/user_name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- BIO -->
     <TextView
         android:id="@+id/user_bio"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:maxLines="2"
         android:ellipsize="end"
-        android:textColor="@color/dark_teal"
-        app:layout_constraintTop_toBottomOf="@id/profile_image"
+        android:gravity="center"
+        android:textSize="13sp"
+        android:textColor="@color/text_secondary"
+        app:layout_constraintTop_toBottomOf="@id/user_occupation"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- BOTÓN LOGOUT (ESTE ERA EL QUE FALTABA) -->
-    <Button
-        android:id="@+id/logOutButton"
-        android:layout_width="wrap_content"
+    <!-- CONTADORES -->
+    <LinearLayout
+        android:id="@+id/stats_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Cerrar sesión"
-        android:layout_margin="16dp"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal"
+        android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/user_bio"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- PUBLICACIONES -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="40dp"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/stat_posts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/_0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_dark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/publicaciones"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- SEGUIDORES -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="40dp"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/stat_followers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/_0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_dark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/seguidores"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- ME GUSTA -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/user_likes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/_0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_dark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/me_gusta"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+    </LinearLayout>
 
     <!-- GALERÍA -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/gallery_grid"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/logOutButton"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/stats_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />

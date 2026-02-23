@@ -294,6 +294,7 @@ class FetchAnimalsWorker(
         title: String,
         text: String
     ): ForegroundInfo {
+
         val notif = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
@@ -302,11 +303,19 @@ class FetchAnimalsWorker(
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
 
-        if (indeterminate) notif.setProgress(0, 0, true)
-        else notif.setProgress(100, progress, false)
+        if (indeterminate) {
+            notif.setProgress(0, 0, true)
+        } else {
+            notif.setProgress(100, progress, false)
+        }
 
-        return ForegroundInfo(notificationId, notif.build())
+        return ForegroundInfo(
+            notificationId,
+            notif.build(),
+            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        )
     }
+
 
     private fun createNotificationChannelIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

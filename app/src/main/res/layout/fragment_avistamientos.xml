@@ -1,200 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F7F7F7"
-    tools:context=".AvistamientosFragment">
+    android:background="@color/background">
 
-    <ScrollView
+    <!-- HEADER CON FONDO REDONDEADO -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:elevation="8dp"
+        android:outlineProvider="bounds">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="56dp"
+            android:paddingHorizontal="16dp"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_header_rounded">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tvAppName"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:text="@string/app_name"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/bilbo"
+                android:textColor="@color/text_primary" />
 
-                <TextView
-                    android:id="@+id/bienvenidoTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bienvenido"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="16dp" />
+            <!-- BOTÓN BÚSQUEDA -->
+            <ImageButton
+                android:id="@+id/btnSearch"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="40dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_search"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/buscar"
+                app:tint="@color/text_primary" />
+            <!-- BOTÓN NOTIFICACIONES -->
+            <ImageButton
+                android:id="@+id/btnnotification"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:padding="12dp"
+                android:src="@drawable/ic_notifications_24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="notification"
+                app:tint="@color/text_primary" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/rounded_search_view_light_gray"
-                    android:orientation="horizontal"
-                    android:padding="8dp"
-                    android:layout_marginBottom="16dp">
+        </RelativeLayout>
+    </FrameLayout>
 
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@android:drawable/ic_menu_search"
-                        app:tint="@android:color/darker_gray"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/busqueda"
-                        android:layout_marginEnd="8dp" />
+    <!-- LÍNEA SEPARADORA -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider" />
 
-                    <EditText
-                        android:id="@+id/searchView_avistamientos"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="@string/buscar"
-                        android:background="@android:color/transparent"
-                        android:textSize="16sp"
-                        android:focusable="false"
-                        android:textColorHint="@android:color/darker_gray"
-                        android:clickable="true"
-                        android:textColor="@android:color/black"
-                        android:inputType="text"
-                        android:autofillHints="Busqueda"
-                        android:minHeight="48dp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/listado_animales"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="8dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView_animals"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:clipToPadding="false"
-                    android:paddingEnd="8dp"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/subir_imagen"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/rounded_card_background"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:id="@+id/selectedImageView"
-                        android:layout_width="match_parent"
-                        android:layout_height="180dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/perezoso_animado"
-                        android:contentDescription="@string/perezoso_animado" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/perezoso_animado"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:paddingTop="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/Generado_IA"
-                        android:textSize="16sp"
-                        android:textColor="@android:color/black"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/reconocer_animales"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginBottom="16dp">
-
-                    <Button
-                        android:id="@+id/selectImageButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/seleccionar_de_la_galer_a"
-                        style="?android:attr/buttonBarStyle"
-                        android:backgroundTint="@color/Old_Banani"
-                        android:textColor="@android:color/white"
-                        android:layout_marginEnd="8dp"
-                        android:gravity="center" />
-
-                    <Button
-                        android:id="@+id/camaraButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/tomar_una_foto"
-                        style="?android:attr/buttonBarStyle"
-                        android:backgroundTint="@color/Old_Banani"
-                        android:textColor="@android:color/white"
-                        android:layout_marginStart="8dp"
-                        android:gravity="center" />
-
-                    <Button
-                        android:id="@+id/retryButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/reintentar"
-                        style="?android:attr/buttonBarStyle"
-                        android:backgroundTint="@color/Old_Banani"
-                        android:textColor="@android:color/white"
-                        android:layout_marginStart="8dp"
-                        android:gravity="center" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </ScrollView>
+    <!-- FEED -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFeed"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
 
 </LinearLayout>

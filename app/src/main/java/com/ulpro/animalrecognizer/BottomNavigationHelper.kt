@@ -1,65 +1,109 @@
 package com.ulpro.animalrecognizer
 
 import android.app.Activity
+import android.content.Intent
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class BottomNavigationHelper(
     private val activity: Activity,
     private val fragmentManager: FragmentManager
 ) {
 
-    private val avistamientosTag = "AVISTAMIENTOS_FRAGMENT"
-    private val aportesTag = "APORTES_FRAGMENT"
+    // -----------------------------
+    // TAGS
+    // -----------------------------
+    private val homeTag = "AVISTAMIENTOS_FRAGMENT"
+    private val categoriesTag = "CATEGORIES_FRAGMENT"
+    private val favoritesTag = "FAVORITES_FRAGMENT"
     private val profileTag = "PROFILE_FRAGMENT"
-    private val settingsTag = "SETTINGS_FRAGMENT"
 
+    // -----------------------------
+    // BOTONES
+    // -----------------------------
     private val homeButton: LinearLayout by lazy { activity.findViewById(R.id.homeButton) }
-    private val galleryButton: LinearLayout by lazy { activity.findViewById(R.id.galleryButton) }
+    private val categoriesButton: LinearLayout by lazy { activity.findViewById(R.id.categoriesButton) }
+    private val favoritesButton: LinearLayout by lazy { activity.findViewById(R.id.favoritesButton) }
     private val profileButton: LinearLayout by lazy { activity.findViewById(R.id.profileButton) }
-    private val settingsButton: LinearLayout by lazy { activity.findViewById(R.id.SettingsButton) }
+    private val scanFab: FloatingActionButton by lazy { activity.findViewById(R.id.scanFab) }
 
+    // -----------------------------
+    // SETUP
+    // -----------------------------
     fun setup() {
+
+        // HOME
         homeButton.setOnClickListener {
             if (fragmentManager.primaryNavigationFragment is AvistamientosFragment) return@setOnClickListener
-            val fragment = getOrCreateFragment(avistamientosTag) { AvistamientosFragment() }
-            switchFragment(fragment, avistamientosTag)
+            switchFragment(
+                getOrCreateFragment(homeTag) { AvistamientosFragment() },
+                homeTag
+            )
         }
-        galleryButton.setOnClickListener {
-            if (fragmentManager.primaryNavigationFragment is AportesFragment) return@setOnClickListener
-            val fragment = getOrCreateFragment(aportesTag) { AportesFragment() }
-            switchFragment(fragment, aportesTag)
+
+        // CATEGORÍAS
+        categoriesButton.setOnClickListener {
+            if (fragmentManager.primaryNavigationFragment is fragment_categorias) return@setOnClickListener
+            switchFragment(
+                getOrCreateFragment(categoriesTag) { fragment_categorias() },
+                categoriesTag
+            )
         }
+
+        // FAVORITOS (pendiente)
+        favoritesButton.setOnClickListener {
+            // TODO: implementar FavoritesFragment
+        }
+
+        // PERFIL
         profileButton.setOnClickListener {
             if (fragmentManager.primaryNavigationFragment is ProfileFragment) return@setOnClickListener
-            val fragment = getOrCreateFragment(profileTag) { ProfileFragment() }
-            switchFragment(fragment, profileTag)
+            switchFragment(
+                getOrCreateFragment(profileTag) { ProfileFragment() },
+                profileTag
+            )
         }
-        settingsButton.setOnClickListener {
-            if (fragmentManager.primaryNavigationFragment is SettingsFragment) return@setOnClickListener
-            val fragment = getOrCreateFragment(settingsTag) { SettingsFragment() }
-            switchFragment(fragment, settingsTag)
+
+        // FAB CENTRAL (NO ES FRAGMENT)
+        scanFab.setOnClickListener {
+            activity.startActivity(
+                Intent(activity, LiveScanActivity::class.java)
+            )
         }
     }
 
+    // -----------------------------
+    // FRAGMENT INICIAL
+    // -----------------------------
     fun showInitialFragment() {
-        val initialFragment = getOrCreateFragment(avistamientosTag) { AvistamientosFragment() }
-        switchFragment(initialFragment, avistamientosTag, addToBackStack = false)
+        switchFragment(
+            getOrCreateFragment(homeTag) { AvistamientosFragment() },
+            homeTag,
+            addToBackStack = false
+        )
     }
 
+    // -----------------------------
+    // FRAGMENT MANAGEMENT
+    // -----------------------------
     private fun getOrCreateFragment(tag: String, creator: () -> Fragment): Fragment {
         return fragmentManager.findFragmentByTag(tag) ?: creator()
     }
 
-    internal fun switchFragment(fragment: Fragment, tag: String, addToBackStack: Boolean = true) {
+    private fun switchFragment(
+        fragment: Fragment,
+        tag: String,
+        addToBackStack: Boolean = true
+    ) {
         val ft = fragmentManager.beginTransaction()
-        val currentFragment = fragmentManager.primaryNavigationFragment
-        if (currentFragment != null) {
-            ft.hide(currentFragment)
+
+        fragmentManager.primaryNavigationFragment?.let {
+            ft.hide(it)
         }
 
         if (fragment.isAdded) {
@@ -70,44 +114,67 @@ class BottomNavigationHelper(
 
         ft.setPrimaryNavigationFragment(fragment)
         ft.setReorderingAllowed(true)
+
         if (addToBackStack) {
             ft.addToBackStack(tag)
         }
+
         ft.commit()
-        updateButtonState() // Actualiza inmediatamente el estado del botón
+
+        updateButtonState()
     }
 
-    fun markActiveButton(buttonLayout: LinearLayout, activeColor: Int, inactiveColor: Int) {
-        val allButtons = listOf(homeButton, galleryButton, profileButton, settingsButton)
-
-        allButtons.forEach { button ->
-            val icon = button.findViewById<ImageView>(R.id.homeIcon)
-                ?: button.findViewById<ImageView>(R.id.galleryIcon)
-                ?: button.findViewById<ImageView>(R.id.profileIcon)
-                ?: button.findViewById<ImageView>(R.id.SettingsIcon)
-
-            val text = button.findViewById<TextView>(R.id.homeText)
-                ?: button.findViewById<TextView>(R.id.galleryText)
-                ?: button.findViewById<TextView>(R.id.profileText)
-                ?: button.findViewById<TextView>(R.id.Settingsext)
-
-            val color = if (button == buttonLayout) activeColor else inactiveColor
-            icon.setColorFilter(ContextCompat.getColor(activity, color))
-            text.setTextColor(ContextCompat.getColor(activity, color))
-        }
-    }
-
+    // -----------------------------
+    // UI STATE
+    // -----------------------------
     fun updateButtonState() {
-        val currentFragment = fragmentManager.primaryNavigationFragment
-        val buttonToMark = when (currentFragment) {
+        val current = fragmentManager.primaryNavigationFragment
+
+        val activeButton = when (current) {
             is AvistamientosFragment -> homeButton
-            is AportesFragment -> galleryButton
+            is fragment_categorias -> categoriesButton
             is ProfileFragment -> profileButton
-            is SettingsFragment -> settingsButton
             else -> null
         }
-        buttonToMark?.let {
-            markActiveButton(it, R.color.orange, R.color.dark_gray)
+
+        markButtons(activeButton)
+    }
+
+    private fun markButtons(activeButton: LinearLayout?) {
+        val activeColor = R.color.primary
+        val inactiveColor = R.color.text_secondary
+
+        val buttons = listOf(
+            homeButton,
+            categoriesButton,
+            favoritesButton,
+            profileButton
+        )
+
+        buttons.forEach { button ->
+
+            val iconId = when (button) {
+                homeButton -> R.id.homeIcon
+                categoriesButton -> R.id.categoriesIcon
+                favoritesButton -> R.id.favoritesIcon
+                else -> R.id.profileIcon
+            }
+
+            val textId = when (button) {
+                homeButton -> R.id.homeText
+                categoriesButton -> R.id.categoriesText
+                favoritesButton -> R.id.favoritesText
+                else -> R.id.profileText
+            }
+
+            val icon = button.findViewById<ImageView>(iconId)
+            val text = button.findViewById<TextView>(textId)
+
+            val colorRes = if (button == activeButton) activeColor else inactiveColor
+            val color = ContextCompat.getColor(activity, colorRes)
+
+            icon.setColorFilter(color)
+            text.setTextColor(color)
         }
     }
 }
