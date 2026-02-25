@@ -247,4 +247,6 @@
     <string name="imagen_usuario">Imagen de usuario</string>
     <string name="siguiendo">Siguiendo</string>
     <string name="ver_comentarios">Ver comentarios</string>
+    <string name="notification">notification</string>
+    <string name="notificaci_n">notificación</string>
 </resources>
