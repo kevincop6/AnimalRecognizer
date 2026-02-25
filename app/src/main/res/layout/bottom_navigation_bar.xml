@@ -1,5 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Bottom Navigation Bar personalizado con FAB central elevado.
+
+    CORRECCIÓN APLICADA:
+    Se eliminaron los dos <View> de scrim lateral (bg_bottom_nav_side_scrim)
+    que existían antes. Esos Views tenían 96×48dp posicionados en
+    start|top y end|top, cubriendo exactamente las esquinas redondeadas
+    superiores del LinearLayout. Al pintarlas con un degradado de color,
+    destruían la transparencia de las esquinas.
+
+    CÓMO FUNCIONA LA TRANSPARENCIA AHORA:
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ FrameLayout 96dp (fondo #00000000 = 100% transparente)         │
+    │                                                                 │
+    │  ╭──────────────────────────────────────────────────────────╮  │ ← esquinas
+    │  │  LinearLayout con bg_bottom_nav (esquinas redondeadas)   │  │   transparentes
+    │  │  [HOME]  [CATEGORÍAS]  [espacio FAB]  [FAV]  [PERFIL]   │  │
+    │  ╰──────────────────────────────────────────────────────────╯  │
+    │  ⬆ 36dp desde top del Frame                                    │
+    │                                                                 │
+    │  ◉ FAB (64dp, top|center_horizontal)                           │
+    └─────────────────────────────────────────────────────────────────┘
+
+    Las esquinas redondeadas del bg_bottom_nav NO pintan esa área
+    (el <shape> solo pinta dentro del rectángulo redondeado).
+    El FrameLayout padre es transparente → se ve el fragmentContainer.
+
+    REQUISITO: fragmentContainer en activity_main_navigation.xml
+    debe ser match_parent (sin marginBottom) para que haya contenido
+    visible a través de las esquinas. Ver activity_main_navigation.xml.
+-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,22 +40,24 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <!-- SCRIM IZQUIERDO (solo zona FAB) -->
-    <View
-        android:layout_width="96dp"
-        android:layout_height="48dp"
-        android:layout_gravity="start|top"
-        android:background="@drawable/bg_bottom_nav_side_scrim" />
+    <!--
+        ═══════════════════════════════════════════════════════
+        BARRA BASE con esquinas redondeadas superiores.
 
-    <!-- SCRIM DERECHO (solo zona FAB) -->
-    <View
-        android:layout_width="96dp"
-        android:layout_height="48dp"
-        android:layout_gravity="end|top"
-        android:rotation="180"
-        android:background="@drawable/bg_bottom_nav_side_scrim" />
+        layout_gravity="bottom": se ancla al fondo del FrameLayout de 96dp.
+        Esto deja ~36dp libres arriba para que el FAB sobre salga.
 
-    <!-- BARRA BASE (COMPLETAMENTE SÓLIDA) -->
+        android:background="@drawable/bg_bottom_nav": drawable <shape>
+        con cornerRadius superior. Los píxeles de las esquinas que
+        quedan fuera del radio NO son pintados → son transparentes.
+
+        elevation="12dp": sombra Material para separar visualmente
+        la barra del contenido del fragment.
+
+        paddingTop="10dp" / paddingBottom="12dp": espaciado interno
+        vertical para íconos y etiquetas de texto.
+        ═══════════════════════════════════════════════════════
+    -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,7 +68,12 @@
         android:paddingBottom="12dp"
         android:elevation="12dp">
 
-        <!-- HOME -->
+        <!--
+            ── ÍTEM: HOME ──────────────────────────────────────
+            layout_weight="1": cada ítem ocupa 1/4 del espacio
+            disponible (4 ítems reales + 1 espacio central = 5 pesos).
+            gravity="center_horizontal": ícono y texto centrados.
+        -->
         <LinearLayout
             android:id="@+id/homeButton"
             android:layout_width="0dp"
@@ -44,6 +83,7 @@
             android:gravity="center_horizontal"
             tools:ignore="UseCompoundDrawables">
 
+            <!-- Ícono de casa. El tint se cambia desde Kotlin al navegar -->
             <ImageView
                 android:id="@+id/homeIcon"
                 android:layout_width="wrap_content"
@@ -52,6 +92,7 @@
                 android:contentDescription="@string/Inicio"
                 app:tint="@color/text_secondary" />
 
+            <!-- Etiqueta del ítem. textSize=12sp estándar Material -->
             <TextView
                 android:id="@+id/homeText"
                 android:layout_width="wrap_content"
@@ -59,9 +100,13 @@
                 android:text="@string/Inicio"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
+
         </LinearLayout>
 
-        <!-- CATEGORÍAS -->
+        <!--
+            ── ÍTEM: CATEGORÍAS ────────────────────────────────
+            Mismo peso y estructura que HOME.
+        -->
         <LinearLayout
             android:id="@+id/categoriesButton"
             android:layout_width="0dp"
@@ -86,15 +131,25 @@
                 android:text="@string/categorias"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
+
         </LinearLayout>
 
-        <!-- ESPACIO CENTRAL PARA FAB -->
+        <!--
+            ── ESPACIO CENTRAL (reservado para el FAB) ─────────
+            layout_width="0dp" + layout_weight="1": ocupa 1/5 del
+            LinearLayout, idéntico al espacio de un ítem real.
+            layout_height="1dp": debe tener altura mínima > 0 para
+            que Android lo incluya en el cálculo del layout_weight.
+            NO tiene ID ni clickListener: es puramente espacial.
+        -->
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- FAVORITOS -->
+        <!--
+            ── ÍTEM: FAVORITOS ─────────────────────────────────
+        -->
         <LinearLayout
             android:id="@+id/favoritesButton"
             android:layout_width="0dp"
@@ -119,9 +174,12 @@
                 android:text="@string/favoritos"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
+
         </LinearLayout>
 
-        <!-- PERFIL -->
+        <!--
+            ── ÍTEM: PERFIL ─────────────────────────────────────
+        -->
         <LinearLayout
             android:id="@+id/profileButton"
             android:layout_width="0dp"
@@ -146,22 +204,38 @@
                 android:text="@string/Perfil"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
+
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- FAB CENTRAL (ENCIMA DE TODO) -->
+    <!--
+        ═══════════════════════════════════════════════════════
+        FAB CENTRAL — Flota encima de la barra.
+
+        layout_gravity="top|center_horizontal":
+        - top: se posiciona desde el borde superior del FrameLayout
+          de 96dp, así ocupa y=0 a y=64dp.
+        - El LinearLayout de la barra empieza en y≈36dp (96-60=36dp).
+        - Resultado: 28dp del FAB quedan encima de la barra y
+          36dp quedan solapados con ella → efecto flotante perfecto.
+
+        elevation="14dp": 2dp más que el LinearLayout (12dp).
+        Garantiza que el FAB esté siempre visualmente por encima,
+        su sombra se proyecta sobre la barra correctamente.
+        ═══════════════════════════════════════════════════════
+    -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/scanFab"
         android:layout_width="64dp"
         android:layout_height="64dp"
+        android:layout_gravity="top|center_horizontal"
+        android:contentDescription="@string/escanear"
+        app:backgroundTint="@color/primary"
+        app:elevation="14dp"
         app:fabCustomSize="64dp"
         app:maxImageSize="45dp"
-        android:layout_gravity="top|center_horizontal"
         app:srcCompat="@drawable/ic_scan_24dp"
-        app:backgroundTint="@color/primary"
-        app:tint="@color/white"
-        app:elevation="14dp"
-        android:contentDescription="@string/escanear" />
+        app:tint="@color/white" />
 
 </FrameLayout>

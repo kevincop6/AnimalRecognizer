@@ -1,4 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Layout raíz de la pantalla principal.
+
+    CORRECCIÓN APLICADA:
+    fragmentContainer pasó de layout_marginBottom="72dp" a match_parent.
+
+    Por qué era el problema:
+    Con marginBottom="72dp", el fragmentContainer terminaba 72dp antes
+    del borde inferior. Las esquinas redondeadas del BNV quedaban
+    exactamente sobre esa zona vacía, mostrando solo @color/background
+    del CoordinatorLayout, no el contenido del fragment.
+
+    Ahora el fragment ocupa el 100% de la pantalla, incluyendo la zona
+    detrás del BNV. Las esquinas transparentes del bg_bottom_nav revelan
+    el contenido real del fragment en lugar de un fondo plano.
+
+    ⚠️ IMPORTANTE PARA FRAGMENTS CON LISTAS/SCROLL:
+    Dado que el fragmentContainer llega hasta el fondo, el último
+    elemento de cualquier RecyclerView o ScrollView quedará oculto
+    bajo la barra. Agregar en cada fragment que tenga scroll:
+        recyclerView.setPadding(0, 0, 0, 96.dpToPx())
+        recyclerView.clipToPadding = false
+    O en XML del fragment: android:paddingBottom="96dp"
+                            android:clipToPadding="false"
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,27 +32,44 @@
     android:background="@color/background"
     android:fitsSystemWindows="true">
 
-    <!-- Contenedor de fragments -->
+    <!--
+        Capa 1 (fondo): Contenedor de fragments.
+        match_parent en ambas dimensiones → ocupa toda la pantalla.
+        El contenido visible en las esquinas redondeadas del BNV
+        proviene de este FrameLayout.
+    -->
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="72dp" />
+        android:layout_height="match_parent" />
 
-    <!-- CONTENEDOR BOTTOM NAV -->
+    <!--
+        Capa 2 (frente): Wrapper del Bottom Navigation Bar.
+        layout_gravity="bottom": anclado al borde inferior.
+        Sin fondo explícito = transparente → no bloquea la capa 1.
+    -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom">
 
-        <!-- SCRIM SUPERIOR (TRANSLÚCIDO) -->
+        <!--
+            Scrim superior de 32dp.
+            Degradado vertical desde transparente (top) hasta
+            @color/background (bottom). Efecto cosmético: el contenido
+            del fragment "se desvanece" antes de llegar al BNV.
+            Se renderiza sobre el fragment pero debajo del BNV.
+        -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="32dp"
             android:layout_gravity="top"
             android:background="@drawable/bg_bottom_nav_scrim" />
 
-        <!-- BOTTOM NAV REAL -->
+        <!--
+            Include del Bottom Navigation Bar corregido.
+            El FrameLayout interno (96dp) se alinea al bottom del wrapper.
+        -->
         <include
             layout="@layout/bottom_navigation_bar"
             android:layout_width="match_parent"
