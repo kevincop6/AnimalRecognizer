@@ -186,4 +186,5 @@
     <string name="identifica_especies_con_ia">Identifica especies con IA</string>
     <string name="recordarme">Recordarme</string>
     <string name="iniciando">Iniciando…</string>
+    <string name="title_activity_full_screen_gallery" ></string>
 </resources>
