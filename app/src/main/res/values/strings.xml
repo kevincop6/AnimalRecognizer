@@ -249,4 +249,7 @@
     <string name="ver_comentarios">Ver comentarios</string>
     <string name="notification">notification</string>
     <string name="notificaci_n">notificación</string>
+    <string name="servidor">Servidor</string>
+    <string name="configura_la_url_base_de_la_api">Configura la URL base de la API</string>
+    <string name="http_192_168_1_1_80_api">http://192.168.1.1:80/api/</string>
 </resources>

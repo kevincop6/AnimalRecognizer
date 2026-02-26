@@ -99,18 +99,6 @@
                 app:layout_constraintEnd_toEndOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!--
-            LÍNEA SEPARADORA debajo del header redondeado.
-            Separada del ConstraintLayout para no interferir con
-            el recorte de esquinas del bg_header_rounded.
-        -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_gravity="bottom"
-            android:background="@color/divider" />
-
     </FrameLayout>
 
 </FrameLayout>

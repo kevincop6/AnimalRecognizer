@@ -128,13 +128,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         animalLogo.setOnClickListener {
-            val currentTime = SystemClock.elapsedRealtime()
-            if (currentTime - lastClickTime < 300) {
-                val intent = Intent(this, MainNavigationActivity::class.java)
-                intent.putExtra("open_fragment", "SettingsFragment")
-                startActivity(intent)
-            }
-            lastClickTime = currentTime
+            startActivity(Intent(this, ServerActivity::class.java))
         }
     }
 

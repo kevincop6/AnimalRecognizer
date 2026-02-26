@@ -54,19 +54,6 @@
         android:layout_gravity="bottom">
 
         <!--
-            Scrim superior de 32dp.
-            Degradado vertical desde transparente (top) hasta
-            @color/background (bottom). Efecto cosmético: el contenido
-            del fragment "se desvanece" antes de llegar al BNV.
-            Se renderiza sobre el fragment pero debajo del BNV.
-        -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:layout_gravity="top"
-            android:background="@drawable/bg_bottom_nav_scrim" />
-
-        <!--
             Include del Bottom Navigation Bar corregido.
             El FrameLayout interno (96dp) se alinea al bottom del wrapper.
         -->
