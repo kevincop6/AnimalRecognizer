@@ -1,5 +1,5 @@
 package com.ulpro.animalrecognizer
-import android.app.AlertDialog
+
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -9,48 +9,55 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
+/**
+ * ServerActivity
+ * Pantalla de configuración que permite al usuario cambiar la URL
+ * base del servidor (útil al cambiar de red local o de entorno).
+ *
+ * Flujo:
+ * 1. Carga la URL actual desde ServerConfig al abrir la pantalla.
+ * 2. El usuario edita la URL en el campo de texto.
+ * 3. Al guardar: valida → persiste con commit() → reinicia la app.
+ */
 class ServerActivity : AppCompatActivity() {
 
     // =========================================================
     // Referencias a las vistas del layout activity_server.xml
     // =========================================================
-    private lateinit var tilServerUrl: TextInputLayout
-    private lateinit var etServerUrl: TextInputEditText
-    private lateinit var btnSave: MaterialButton
+    private lateinit var tilServerUrl: TextInputLayout   // Contenedor con label y mensaje de error
+    private lateinit var etServerUrl: TextInputEditText  // Campo de texto editable con la URL
+    private lateinit var btnSave: MaterialButton         // Botón para guardar y reiniciar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_server)
 
         // ---------------------------------------------------------
-        // Vincular vistas con sus IDs del layout
+        // Vincular vistas con sus ID del layout XML
         // ---------------------------------------------------------
         tilServerUrl = findViewById(R.id.tilServerUrl)
         etServerUrl  = findViewById(R.id.etServerUrl)
         btnSave      = findViewById(R.id.btnSave)
 
         // ---------------------------------------------------------
-        // Al abrir la pantalla, cargar la URL guardada actualmente
-        // en SharedPreferences a través de ServerConfig.
-        // Si BASE_URL no fue inicializada aún, se lee directo
-        // desde SharedPreferences para evitar UninitializedPropertyAccessException
+        // Cargar la URL actualmente guardada en el campo de texto.
+        // Try/catch como seguridad por si MyApplication no está
+        // registrado en el Manifest y initialize() nunca se llamó.
         // ---------------------------------------------------------
         val currentUrl = try {
             ServerConfig.BASE_URL
         } catch (e: UninitializedPropertyAccessException) {
-            // Fallback: leer directo de SharedPreferences si
-            // ServerConfig aún no fue inicializado (edge case)
+            // Fallback directo a SharedPreferences — solo ocurre si
+            // MyApplication no está registrado en AndroidManifest.xml
             getSharedPreferences("serverConfig", Context.MODE_PRIVATE)
                 .getString("serverUrl", "http://192.168.100.41/AnimalRecognizer-API/")
                 ?: "http://192.168.100.41/AnimalRecognizer-API/"
         }
 
-        // Rellenar el campo con la URL actual
+        // Mostrar URL actual para que el usuario la vea y edite
         etServerUrl.setText(currentUrl)
 
-        // ---------------------------------------------------------
-        // Listener del botón Guardar
-        // ---------------------------------------------------------
+        // Asignar listener al botón Guardar
         btnSave.setOnClickListener {
             guardarYReiniciar()
         }
@@ -58,57 +65,48 @@ class ServerActivity : AppCompatActivity() {
 
     // =============================================================
     // guardarYReiniciar()
-    // Valida el campo, guarda la nueva URL mediante ServerConfig
-    // y reinicia la aplicación desde cero para que todos los
-    // módulos (Retrofit, etc.) usen la nueva BASE_URL
+    // Valida la URL, la persiste con commit() (síncrono) y reinicia
+    // la app completa para que todos los módulos usen la nueva URL.
     // =============================================================
     private fun guardarYReiniciar() {
 
-        // Obtener texto ingresado y limpiar espacios accidentales
+        // Obtener texto ingresado eliminando espacios accidentales
         val nuevaUrl = etServerUrl.text.toString().trim()
 
-        // ---------------------------------------------------------
         // Validación 1: campo vacío
-        // ---------------------------------------------------------
         if (nuevaUrl.isEmpty()) {
             tilServerUrl.error = "La URL no puede estar vacía"
             return
         }
 
-        // ---------------------------------------------------------
         // Validación 2: debe iniciar con http:// o https://
-        // ---------------------------------------------------------
         if (!nuevaUrl.startsWith("http://") && !nuevaUrl.startsWith("https://")) {
             tilServerUrl.error = "La URL debe iniciar con http:// o https://"
             return
         }
 
-        // Sí pasa validaciones, limpiar error previo
+        // Pasó validaciones — limpiar error previo visible
         tilServerUrl.error = null
 
         // ---------------------------------------------------------
-        // Guardar nueva URL usando ServerConfig
-        // Esto actualiza SharedPreferences Y la variable BASE_URL
-        // en memoria al mismo tiempo
+        // Guardar URL con commit() SÍNCRONO dentro de updateBaseUrl().
+        // El dato queda físicamente en disco ANTES de que exit(0)
+        // mate el proceso — ese era el bug original con apply().
         // ---------------------------------------------------------
         ServerConfig.updateBaseUrl(this, nuevaUrl)
 
         Toast.makeText(this, "URL guardada. Reiniciando...", Toast.LENGTH_SHORT).show()
 
         // ---------------------------------------------------------
-        // Reiniciar la aplicación completa
-        // Se obtiene el Intent de entrada (launcher) de la app,
-        // se limpian todos los Activities del back stack con
-        // FLAG_ACTIVITY_NEW_TASK + FLAG_ACTIVITY_CLEAR_TASK
-        // y se lanza desde cero
+        // Reiniciar la app desde el Activity raíz (launcher).
+        // FLAG_ACTIVITY_NEW_TASK + FLAG_ACTIVITY_CLEAR_TASK limpian
+        // todo el back stack para un arranque completamente limpio.
         // ---------------------------------------------------------
         val intent = packageManager.getLaunchIntentForPackage(packageName)
-        intent?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
+        intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
 
-        // Finalizar el proceso actual para forzar reinicio limpio
+        // Matar el proceso DESPUÉS de commit() — escritura garantizada
         Runtime.getRuntime().exit(0)
     }
 }
