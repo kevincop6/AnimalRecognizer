@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.ulpro.animalrecognizer">
-
+    package="com.ulpro.animalrecognizer" >
     <!-- Permisos -->
     <uses-feature
         android:name="android.hardware.camera"
@@ -31,7 +30,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AnimalRecognizer"
         android:usesCleartextTraffic="true"
-        tools:replace="android:icon">
+        tools:replace="android:icon" >
+        <activity
+            android:name=".ServerActivity"
+            android:exported="false" />
         <activity
             android:name=".FullScreenGalleryActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -62,8 +64,8 @@
             android:theme="@style/Theme.AnimalRecognizer" />
         <activity
             android:name=".details_animals"
-            android:theme="@style/Theme.AnimalRecognizer.NoFullscreen"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AnimalRecognizer.NoFullscreen" />
         <activity
             android:name=".ActivityCompareImages"
             android:exported="false" />
@@ -73,7 +75,7 @@
         <activity android:name=".MainNavigationActivity" />
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

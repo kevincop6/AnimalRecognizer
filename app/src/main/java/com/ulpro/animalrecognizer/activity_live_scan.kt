@@ -1,6 +1,8 @@
 package com.ulpro.animalrecognizer
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -12,7 +14,9 @@ import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -63,11 +67,30 @@ class LiveScanActivity : AppCompatActivity() {
     private lateinit var classifier: AnimalImageClassifier
 
     // =====================
-    // Gallery
+    // Gallery Launcher
+    // Contrato que abre el selector de imágenes del sistema.
+    // Solo actúa si el uri recibido no es nulo.
     // =====================
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { loadBitmapFromUri(it)?.let { bmp -> classifyBitmap(bmp) } }
+        }
+
+    // =====================================================================
+    // PERMISSION LAUNCHER
+    // Contrato moderno para solicitar UN permiso en tiempo de ejecución.
+    // La lambda recibe `isGranted: Boolean` con el resultado del usuario.
+    // Se registra aquí (antes de onCreate) como exige el ciclo de vida.
+    // =====================================================================
+    private val requestCameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // ✅ El usuario concedió el permiso → iniciar la cámara normalmente
+                startCamera()
+            } else {
+                // ❌ El usuario rechazó el permiso → decidir qué mostrar
+                handleCameraPermissionDenied()
+            }
         }
 
     // ======================================================
@@ -83,11 +106,14 @@ class LiveScanActivity : AppCompatActivity() {
         bindViews()
         loadAnimations()
         setupActions()
-        startCamera()
         setupOutsideTouchToDismiss()
 
         speciesCard.visibility = View.GONE
         focusBox.startAnimation(scanPulse)
+
+        // 🔑 En lugar de llamar startCamera() directamente,
+        // primero verificamos/solicitamos el permiso de cámara.
+        checkAndRequestCameraPermission()
     }
 
     override fun onDestroy() {
@@ -97,22 +123,138 @@ class LiveScanActivity : AppCompatActivity() {
     }
 
     // ======================================================
+    // PERMISSION LOGIC
+    // ======================================================
+
+    /**
+     * Verifica si el permiso CAMERA ya fue concedido.
+     * - Si ya fue concedido: inicia la cámara directamente.
+     * - Si NO: verifica si debe mostrar una explicación (shouldShowRequestPermissionRationale)
+     *   antes de lanzar el diálogo del sistema, o lanza el diálogo directo.
+     *
+     * shouldShowRequestPermissionRationale devuelve `true` solo si el usuario
+     * ya rechazó el permiso UNA vez (sin marcar "No volver a preguntar").
+     */
+    private fun checkAndRequestCameraPermission() {
+        when {
+            // Caso 1: El permiso ya está concedido → iniciar cámara sin interrupciones
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                startCamera()
+            }
+
+            // Caso 2: El usuario rechazó el permiso antes → mostrar explicación contextual
+            // antes de volver a solicitarlo, para que entienda por qué es necesario.
+            shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) -> {
+                showPermissionRationaleDialog()
+            }
+
+            // Caso 3: Primera vez que se solicita (o el usuario marcó "No volver a preguntar")
+            // → lanzar directamente el diálogo del sistema.
+            else -> {
+                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    /**
+     * Muestra un AlertDialog explicando POR QUÉ la app necesita la cámara.
+     * Esto mejora la UX: el usuario entiende el contexto antes de que
+     * aparezca el diálogo del sistema operativo.
+     *
+     * - "Permitir" → lanza el diálogo del sistema para conceder el permiso.
+     * - "Cancelar" → cierra la Activity, ya que sin cámara no hay funcionalidad.
+     */
+    private fun showPermissionRationaleDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Permiso de cámara requerido")
+            .setMessage(
+                "AnimalRecognizer necesita acceso a la cámara para identificar " +
+                        "la fauna local de la Península de Osa en tiempo real. " +
+                        "Sin este permiso la aplicación no puede funcionar."
+            )
+            .setPositiveButton("Permitir") { dialog, _ ->
+                dialog.dismiss()
+                // Lanzar el diálogo oficial del sistema operativo
+                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+                // Sin cámara la Activity no tiene sentido → cerrar
+                Toast.makeText(
+                    this,
+                    "El permiso de cámara es necesario para usar el escáner.",
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
+            }
+            // Evitar que el usuario cierre el diálogo tocando fuera sin decidir
+            .setCancelable(false)
+            .show()
+    }
+
+    /**
+     * Maneja el caso en que el usuario DENEGÓ el permiso desde el launcher.
+     *
+     * Si shouldShowRequestPermissionRationale devuelve `false` aquí, significa
+     * que el usuario marcó "No volver a preguntar", por lo que el diálogo
+     * del sistema ya no aparecerá: hay que redirigir a Ajustes manualmente.
+     *
+     * Si devuelve `true`, solo lo rechazó una vez sin marcar esa opción:
+     * mostramos un mensaje simple y cerramos.
+     */
+    private fun handleCameraPermissionDenied() {
+        if (!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+            // El usuario marcó "No volver a preguntar" → solo Ajustes puede habilitarlo
+            AlertDialog.Builder(this)
+                .setTitle("Permiso bloqueado")
+                .setMessage(
+                    "El permiso de cámara fue bloqueado permanentemente. " +
+                            "Ve a Ajustes → Aplicaciones → AnimalRecognizer → Permisos " +
+                            "para habilitarlo manualmente."
+                )
+                .setPositiveButton("Ir a Ajustes") { _, _ ->
+                    // Abrir la pantalla de ajustes de la app directamente
+                    val intent = Intent(
+                        android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", packageName, null)
+                    )
+                    startActivity(intent)
+                    finish()
+                }
+                .setNegativeButton("Cerrar") { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
+        } else {
+            // Solo rechazó una vez, sin bloqueo permanente
+            Toast.makeText(
+                this,
+                "Permiso denegado. La cámara es necesaria para escanear animales.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        }
+    }
+
+    // ======================================================
     // UI SETUP
     // ======================================================
     private fun bindViews() {
-        rootView = findViewById(android.R.id.content)
-        previewView = findViewById(R.id.previewView)
-        focusBox = findViewById(R.id.focusBox)
+        rootView       = findViewById(android.R.id.content)
+        previewView    = findViewById(R.id.previewView)
+        focusBox       = findViewById(R.id.focusBox)
 
-        speciesCard = findViewById(R.id.speciesCard)
-        imgAnimal = findViewById(R.id.imgAnimal)
-        txtAnimalName = findViewById(R.id.txtAnimalName)
+        speciesCard    = findViewById(R.id.speciesCard)
+        imgAnimal      = findViewById(R.id.imgAnimal)
+        txtAnimalName  = findViewById(R.id.txtAnimalName)
         btnOpenDetails = findViewById(R.id.btnOpenDetails)
 
         cameraControls = findViewById(R.id.cameraControls)
-        btnClose = findViewById(R.id.btnClose)
-        btnGallery = findViewById(R.id.btnGallery)
-        btnShutter = findViewById(R.id.btnShutter)
+        btnClose       = findViewById(R.id.btnClose)
+        btnGallery     = findViewById(R.id.btnGallery)
+        btnShutter     = findViewById(R.id.btnShutter)
     }
 
     private fun loadAnimations() {
@@ -141,13 +283,13 @@ class LiveScanActivity : AppCompatActivity() {
             if (event.action == MotionEvent.ACTION_DOWN &&
                 speciesCard.visibility == View.VISIBLE
             ) {
-                val loc = IntArray(2)
+                val loc   = IntArray(2)
                 speciesCard.getLocationOnScreen(loc)
 
-                val left = loc[0]
-                val top = loc[1]
-                val right = left + speciesCard.width
-                val bottom = top + speciesCard.height
+                val left   = loc[0]
+                val top    = loc[1]
+                val right  = left + speciesCard.width
+                val bottom = top  + speciesCard.height
 
                 val x = event.rawX.toInt()
                 val y = event.rawY.toInt()
@@ -162,6 +304,7 @@ class LiveScanActivity : AppCompatActivity() {
 
     // ======================================================
     // CAMERAX
+    // Solo se llama cuando el permiso CAMERA ya fue concedido.
     // ======================================================
     private fun startCamera() {
         val providerFuture = ProcessCameraProvider.getInstance(this)
@@ -201,7 +344,7 @@ class LiveScanActivity : AppCompatActivity() {
 
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap? {
         val buffer = image.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
+        val bytes  = ByteArray(buffer.remaining())
         buffer.get(bytes)
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
     }
@@ -217,9 +360,7 @@ class LiveScanActivity : AppCompatActivity() {
             val animal = findAnimalByName(result.className)
 
             runOnUiThread {
-                if (animal != null) {
-                    showSpeciesCard(animal)
-                }
+                if (animal != null) showSpeciesCard(animal)
             }
         }
     }
@@ -228,7 +369,6 @@ class LiveScanActivity : AppCompatActivity() {
     // UI CARD
     // ======================================================
     private fun showSpeciesCard(animal: Animal) {
-
         txtAnimalName.text = animal.nombre
 
         if (!animal.imagenUrl.isNullOrBlank()) {
@@ -238,7 +378,7 @@ class LiveScanActivity : AppCompatActivity() {
         }
 
         cameraControls.visibility = View.INVISIBLE
-        cameraControls.isEnabled = false
+        cameraControls.isEnabled  = false
 
         btnOpenDetails.setOnClickListener {
             startActivity(
@@ -248,14 +388,14 @@ class LiveScanActivity : AppCompatActivity() {
         }
 
         speciesCard.visibility = View.VISIBLE
-        speciesCard.alpha = 0f
+        speciesCard.alpha      = 0f
         speciesCard.animate().alpha(1f).setDuration(220).start()
     }
 
     private fun hideSpeciesCard() {
-        speciesCard.visibility = View.GONE
+        speciesCard.visibility    = View.GONE
         cameraControls.visibility = View.VISIBLE
-        cameraControls.isEnabled = true
+        cameraControls.isEnabled  = true
         focusBox.startAnimation(scanPulse)
     }
 
@@ -282,7 +422,7 @@ class LiveScanActivity : AppCompatActivity() {
 
     private fun getActiveAnimalsFile(): File {
         val prefs = getSharedPreferences("animals_cache_meta", MODE_PRIVATE)
-        val name = prefs.getString("active_animals_file", null)
+        val name  = prefs.getString("active_animals_file", null)
         return if (name.isNullOrBlank()) File("") else File(filesDir, name)
     }
 

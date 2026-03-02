@@ -1,5 +1,5 @@
 [versions]
-agp = "9.0.0"
+agp = "9.0.1"
 cameraCore = "1.4.1"
 imageLabeling = "17.0.9"
 imageLabelingCustom = "17.0.3"

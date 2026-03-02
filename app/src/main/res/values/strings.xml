@@ -186,5 +186,70 @@
     <string name="identifica_especies_con_ia">Identifica especies con IA</string>
     <string name="recordarme">Recordarme</string>
     <string name="iniciando">Iniciando…</string>
-    <string name="title_activity_full_screen_gallery" ></string>
+    <string name="title_activity_full_screen_gallery" />
+
+    <!-- activity_details_animals.xml -->
+    <string name="animal_image">Imagen del animal</string>
+    <string name="favoritos">Favoritos</string>
+    <string name="volver">Volver</string>
+
+    <!--
+        En tus errores sale "gion", casi seguro lo usas como un guion medio
+        o separador visual. Ajusta el texto si lo necesitas diferente.
+    -->
+    <string name="gion">-</string>
+
+    <!-- Igual para "g_nero": parece ser "género" del animal -->
+    <string name="g_nero">Género</string>
+
+    <!-- "pa_ses_donde_existe": texto para indicar países donde existe el animal -->
+    <string name="pa_ses_donde_existe">Países donde existe</string>
+
+    <!-- "pa_ses_donde_se_extingui": países donde se extinguió -->
+    <string name="pa_ses_donde_se_extingui">Países donde se extinguió</string>
+
+    <!-- "h_bitat": hábitat del animal -->
+    <string name="h_bitat">Hábitat</string>
+
+    <!-- "fuente_de_conservaci_n": fuente o entidad de conservación -->
+    <string name="fuente_de_conservaci_n">Fuente de conservación</string>
+
+    <!-- activity_full_screen_image.xml -->
+    <string name="me_gusta">Me gusta</string>
+    <string name="vistas">Vistas</string>
+    <string name="comentarios">Comentarios</string>
+    <string name="animal">Animal</string>
+
+    <!-- activity_live_scan.xml -->
+    <string name="captura">Captura</string>
+    <string name="galeria">Galería</string>
+
+    <!-- activity_profile.xml -->
+    <string name="foto_perfil">Foto de perfil</string>
+    <string name="seguir">Seguir</string>
+    <!-- NUEVOS: activity_profile.xml / fragment_profile.xml / gallery_item.xml -->
+    <string name="publicaciones">Publicaciones</string>
+    <string name="seguidores">Seguidores</string>
+    <string name="_0">0</string>
+    <string name="editar">Editar</string>
+
+    <!-- NUEVOS: bottom_navigation_bar.xml -->
+    <string name="categorias">Categorías</string>
+    <string name="escanear">Escanear</string>
+
+    <!-- NUEVO: include_scan_species_card.xml -->
+    <string name="suspencion">Suspensión</string>
+
+    <!-- NUEVO: item_categoria_card.xml -->
+    <string name="categoria_imagen">Categoría imagen</string>
+
+    <!-- NUEVOS: item_feed_post.xml -->
+    <string name="imagen_usuario">Imagen de usuario</string>
+    <string name="siguiendo">Siguiendo</string>
+    <string name="ver_comentarios">Ver comentarios</string>
+    <string name="notification">notification</string>
+    <string name="notificaci_n">notificación</string>
+    <string name="servidor">Servidor</string>
+    <string name="configura_la_url_base_de_la_api">Configura la URL base de la API</string>
+    <string name="http_192_168_1_1_80_api">http://192.168.1.1:80/api/</string>
 </resources>

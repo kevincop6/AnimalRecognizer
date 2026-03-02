@@ -76,7 +76,7 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.legacy.support.v4)
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
     implementation("com.airbnb.android:lottie:5.0.3")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
